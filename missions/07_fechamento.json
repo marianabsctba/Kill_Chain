@@ -1,0 +1,179 @@
+{
+  "id": "07_fechamento",
+  "requer": "06_virada_do_pix",
+  "dificuldade": 7,
+  "titulo": "[07] Fechamento",
+  "resumo": "No CSIRT Aurora, conecte os incidentes brasileiros, avalie comunicação legal e encerre a temporada.",
+  "intro": "Segunda-feira, 09h10. Não há vítima nova nem invasão. {nome}, a coordenação reuniu os registros preservados das organizações atendidas. Sua tarefa é montar uma hipótese comum, distinguir indícios de autoria e fechar recomendações jurídicas. O arquivo só permite consultar evidências de casos concluídos.",
+  "inicio": "estacao",
+  "tempo": 0,
+  "hosts": {
+    "estacao": {
+      "nome": "CSIRT Aurora, sala de encerramento",
+      "ip": "10.99.0.21",
+      "tipo": "estacao",
+      "pos": [
+        0.12,
+        0.5
+      ],
+      "oculto": false,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/dossie/nota_inicial.txt": "Arquivo da temporada 1. Reabra as provas dos casos 03 a 06 com o comando arquivo. Referência recorrente: VN-SD-17. Uma mesma referência contratual não demonstra que a prestadora executou ataques.",
+        "/dossie/contratos.txt": "Cadastro consolidado de fornecedores fictícios: referência VN-SD-17 = Vértice Norte Serviços Digitais; referência LA-22 = Litoral Apoio; referência JN-09 = Jangada Networks. Os contratos de VN-SD-17 cobrem integração em saúde, prefeitura, saneamento e serviços financeiros. Ponto de investigação: possível abuso de uma relação de confiança com a prestadora, sem atribuição comprovada de autoria.",
+        "/juridico/avaliacao.txt": "LGPD e Resolução CD/ANPD 15/2024: o controlador deve comunicar à ANPD e aos titulares incidentes que possam acarretar risco ou dano relevante. Deve avaliar dados efetivamente afetados, categorias de titulares, gravidade e impactos. Incidente técnico, por si só, não prova exposição de dados pessoais. Nos casos da temporada há sinais de acesso e de coleta, mas é preciso delimitar titulares e risco por controlador. Prazo geral de comunicação: 3 dias úteis a partir do conhecimento do incidente que afetou dados pessoais, ressalvada legislação específica. A comunicação ao titular deve ser simples, clara e preferencialmente direta. Fonte: https://www.gov.br/anpd/pt-br/canais_atendimento/agente-de-tratamento/comunicado-de-incidente-de-seguranca-cis",
+        "/juridico/encaminhamento.txt": "Encaminhamento jurídico: preservar cadeia de custódia, solicitar a cada controlador avaliação e documentação sobre risco ou dano relevante, orientar sobre comunicação à ANPD e aos titulares quando aplicável. Indícios de crime devem ser encaminhados à polícia e ao Ministério Público com as evidências disponíveis. O CSIRT não executa ações contra sistemas da quadrilha nem atribui autoria sem lastro probatório."
+      }
+    },
+    "juridico": {
+      "nome": "Sala jurídica do CSIRT",
+      "ip": "10.99.0.40",
+      "tipo": "servidor",
+      "pos": [
+        0.61,
+        0.5
+      ],
+      "oculto": false,
+      "externo": false,
+      "estado": "seguro",
+      "arquivos": {
+        "/orientacoes/escopo.txt": "A decisão de comunicar pertence ao controlador. Prestadores e equipe técnica apoiam a apuração. Proteção de dados e investigação criminal são fluxos complementares, não substitutos."
+      }
+    }
+  },
+  "links": [
+    [
+      "estacao",
+      "juridico"
+    ]
+  ],
+  "emails": [
+    {
+      "quando": "inicio",
+      "de": "Helena Prado <coordenacao@aurora.example>",
+      "assunto": "Última reunião da temporada",
+      "corpo": "Bem-vind{o|a}, {nome}. Temos quatro contratos com uma referência comum e um caso anterior mencionando outra organização. Reabra os documentos antigos e evite conclusões precipitadas. A responsabilidade de comunicar é do controlador."
+    },
+    {
+      "quando": "o10",
+      "de": "Contato desconhecido <aviso@mensagem.example>",
+      "assunto": "Próxima etapa",
+      "corpo": "O código VN-SD-17 era só a porta de entrada. O que aconteceu com o acesso delegado na nuvem? [simulacao] Fim da mensagem."
+    }
+  ],
+  "objetivos": [
+    {
+      "id": "o1",
+      "texto": "Reabra a trilha do fornecedor do caso 03",
+      "dica": "Use arquivo para consultar a evidência preservada do caso anterior e verifique os campos de referência.",
+      "tipo": "comando",
+      "comando": "arquivo",
+      "alvo": "03_turno_cego:ad:/logs/fornecedor.log"
+    },
+    {
+      "id": "o2",
+      "texto": "Reabra a trilha contratual do caso 04",
+      "dica": "Use arquivo para consultar a evidência preservada do caso anterior e verifique os campos de referência.",
+      "tipo": "comando",
+      "comando": "arquivo",
+      "alvo": "04_folha_fantasma:ad:/logs/contratos.log"
+    },
+    {
+      "id": "o3",
+      "texto": "Reabra o controle de terceiros do caso 05",
+      "dica": "Use arquivo para consultar a evidência preservada do caso anterior e verifique os campos de referência.",
+      "tipo": "comando",
+      "comando": "arquivo",
+      "alvo": "05_agua_em_alerta:ad:/logs/terceiros.log"
+    },
+    {
+      "id": "o4",
+      "texto": "Reabra a telemetria da integração do caso 06",
+      "dica": "Use arquivo para consultar a evidência preservada do caso anterior e verifique os campos de referência.",
+      "tipo": "comando",
+      "comando": "arquivo",
+      "alvo": "06_virada_do_pix:workstation:/logs/terceirizacao.log"
+    },
+    {
+      "id": "o5",
+      "texto": "Identifique a prestadora comum nas quatro organizações",
+      "dica": "Cruze os quatro identificadores e consulte o cadastro consolidado. Contrato compartilhado é pista, não prova de culpa.",
+      "tipo": "resposta",
+      "chave": "prestadora",
+      "valor": "Vértice Norte Serviços Digitais",
+      "evidencias": [
+        "03_turno_cego:ad:/logs/fornecedor.log",
+        "04_folha_fantasma:ad:/logs/contratos.log",
+        "05_agua_em_alerta:ad:/logs/terceiros.log",
+        "06_virada_do_pix:workstation:/logs/terceirizacao.log",
+        "estacao:/dossie/contratos.txt"
+      ]
+    },
+    {
+      "id": "o6",
+      "texto": "Leia a análise jurídica de proteção de dados",
+      "dica": "Verifique quais critérios acionam a obrigação e qual organização decide.",
+      "tipo": "ler",
+      "host": "estacao",
+      "arquivo": "/juridico/avaliacao.txt",
+      "fichas": [
+        "T1199"
+      ]
+    },
+    {
+      "id": "o7",
+      "texto": "Determine o critério para comunicar incidentes à ANPD",
+      "dica": "A obrigação depende do impacto potencial a titulares, não de todo alerta técnico.",
+      "tipo": "resposta",
+      "chave": "anpd",
+      "valor": "risco_ou_dano_relevante",
+      "evidencias": [
+        "estacao:/juridico/avaliacao.txt"
+      ]
+    },
+    {
+      "id": "o8",
+      "texto": "Determine quando os titulares precisam ser informados",
+      "dica": "A comunicação é condicionada à avaliação de risco ou dano relevante pelo controlador.",
+      "tipo": "resposta",
+      "chave": "titulares",
+      "valor": "quando_risco_ou_dano_relevante",
+      "evidencias": [
+        "estacao:/juridico/avaliacao.txt"
+      ]
+    },
+    {
+      "id": "o9",
+      "texto": "Informe o prazo geral para comunicação à ANPD e aos titulares",
+      "dica": "Procure o prazo previsto na resolução e observe ressalvas legais.",
+      "tipo": "resposta",
+      "chave": "prazo",
+      "valor": "3_dias_uteis",
+      "evidencias": [
+        "estacao:/juridico/avaliacao.txt"
+      ]
+    },
+    {
+      "id": "o10",
+      "texto": "Defina o encaminhamento dos indícios criminais, sem contra-ataque",
+      "dica": "Conserve a cadeia de custódia. Apuração penal cabe às autoridades competentes.",
+      "tipo": "resposta",
+      "chave": "encaminhamento",
+      "valor": "policia_e_ministerio_publico",
+      "evidencias": [
+        "estacao:/juridico/encaminhamento.txt"
+      ]
+    }
+  ],
+  "fichas": {
+    "T1199": {
+      "nome": "Relação de confiança",
+      "descricao": "Adversários podem explorar acessos já concedidos a prestadores e terceiros. A referência comum aponta uma hipótese investigativa, não prova autoria da prestadora.",
+      "defesa": "Revisar privilégios de terceiros, acessos delegados, MFA, segregação de clientes, auditoria e revogação controlada.",
+      "url": "https://attack.mitre.org/techniques/T1199/"
+    }
+  },
+  "debrief": "Temporada encerrada, {nome}. Você vinculou quatro incidentes à referência VN-SD-17 e à prestadora fictícia Vértice Norte Serviços Digitais, sem confundir vínculo contratual com atribuição criminal. A Clínica Boa Vista citada no caso 02 permanece uma hipótese de alcance da campanha, não uma vítima confirmada. Os controladores precisam avaliar separadamente a comunicação à ANPD e aos titulares, preservando provas e observando o prazo aplicável. Indícios criminais seguem para polícia e Ministério Público. Nova pergunta: quem tinha acesso delegado à nuvem?",
+  "falha": "Sem cronômetro. O encerramento depende de evidências e avaliações corretas."
+}
