@@ -217,7 +217,7 @@ func _connect(args: PackedStringArray) -> void:
 	if id.is_empty():
 		term.write("connect: host desconhecido: %s" % args[0], UiTheme.DANGER)
 		return
-	if Game.host(id).get("externo", false):
+	if Game.host(id).get("externo", false) and not Game.host(id).get("simulado", false):
 		term.write("connect: %s é infraestrutura externa, fora do escopo do CSIRT." % id, UiTheme.WARN)
 		term.write("registre o indicador no relatório e encaminhe às autoridades.", UiTheme.DIM)
 		return
