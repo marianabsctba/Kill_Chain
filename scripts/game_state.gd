@@ -18,6 +18,11 @@ const PROGRESS_PATH := "user://progresso.cfg"
 const MISSIONS_DIR := "res://missions"
 
 var completed_missions: Dictionary = {}
+var best_scores: Dictionary = {}
+var evidence_seen: Dictionary = {}
+var wrong_answers := 0
+var wrong_containment := 0
+var score_result := 0
 
 var player_name := ""
 var gender: int = Gender.FEMININO
@@ -120,20 +125,25 @@ func fmt(text: String) -> String:
 
 func load_progress() -> void:
 	completed_missions.clear()
+	best_scores.clear()
 	var cfg := ConfigFile.new()
 	if cfg.load(PROGRESS_PATH) != OK:
 		return
-	if not cfg.has_section("concluidas"):
-		return
-	for id in cfg.get_section_keys("concluidas"):
-		if cfg.get_value("concluidas", id, false):
-			completed_missions[id] = true
+	if cfg.has_section("concluidas"):
+		for id in cfg.get_section_keys("concluidas"):
+			if cfg.get_value("concluidas", id, false):
+				completed_missions[id] = true
+	if cfg.has_section("recordes"):
+		for id in cfg.get_section_keys("recordes"):
+			best_scores[id] = int(cfg.get_value("recordes", id, 0))
 
 
 func save_progress() -> void:
 	var cfg := ConfigFile.new()
 	for id in completed_missions:
 		cfg.set_value("concluidas", id, true)
+	for id in best_scores:
+		cfg.set_value("recordes", id, best_scores[id])
 	var err := cfg.save(PROGRESS_PATH)
 	if err != OK:
 		push_warning("Falha ao salvar progresso: %s" % err)
@@ -179,6 +189,10 @@ func start_mission(m: Dictionary) -> void:
 	blocked_ips.clear()
 	disabled_users.clear()
 	objective_index = 0
+	evidence_seen.clear()
+	wrong_answers = 0
+	wrong_containment = 0
+	score_result = 0
 	time_left = float(mission.get("tempo", 0))
 	running = true
 	for id in hosts():
@@ -243,6 +257,36 @@ func is_finished() -> bool:
 ## Chamado pelo terminal a cada comando bem-sucedido. Avança o objetivo
 ## atual quando ele é do tipo "comando" ou "ler" e bate com o evento.
 ## Retorna true se o comando concluiu o objetivo.
+func record_evidence(path: String) -> void:
+	if running:
+		evidence_seen["%s:%s" % [host_id, path]] = true
+
+func record_bad_containment() -> void:
+	if running:
+		wrong_containment += 1
+
+func missing_evidence(obj: Dictionary) -> Array:
+	var missing: Array = []
+	for entry in obj.get("evidencias", []):
+		if not evidence_seen.has(str(entry)):
+			missing.append(entry)
+	return missing
+
+func calculate_score() -> int:
+	var points := 600 if is_finished() else 0
+	points += mini(evidence_seen.size() * 25, 200)
+	points += int(200.0 * clampf(time_left / maxf(float(mission.get("tempo", 1)), 1.0), 0.0, 1.0)) if is_timed() else 200
+	return maxi(0, points - wrong_answers * 35 - wrong_containment * 75)
+
+func score_rank(points: int) -> String:
+	if points >= 900:
+		return "S"
+	if points >= 750:
+		return "A"
+	if points >= 600:
+		return "B"
+	return "C"
+
 func notify(command: String, arg := "") -> bool:
 	var obj := current_objective()
 	if obj.is_empty():
@@ -267,6 +311,8 @@ func answer(key: String, value: String) -> int:
 	var obj := current_objective()
 	if obj.get("tipo", "") != "resposta" or _norm(key) != _norm(str(obj.get("chave", ""))):
 		return -1
+	if not missing_evidence(obj).is_empty():
+		return -2
 	var accepted = obj.get("valor", "")
 	if typeof(accepted) != TYPE_ARRAY:
 		accepted = [accepted]
@@ -274,6 +320,7 @@ func answer(key: String, value: String) -> int:
 		if _norm(value) == _norm(str(v)):
 			_complete_objective()
 			return 1
+	wrong_answers += 1
 	return 0
 
 
@@ -293,7 +340,10 @@ func _complete_objective() -> void:
 	_deliver_mail(str(obj.get("id", "")))
 	if is_finished():
 		running = false
-		completed_missions[str(mission.get("id", ""))] = true
+		var id := str(mission.get("id", ""))
+		completed_missions[id] = true
+		score_result = calculate_score()
+		best_scores[id] = maxi(int(best_scores.get(id, 0)), score_result)
 		save_progress()
 		mission_finished.emit()
 
