@@ -2,7 +2,39 @@
 
 Jogo educativo de defesa cibernética, em português, feito em Godot 4. Você é analista de um CSIRT, investiga incidentes pelo terminal e aprende o MITRE ATT&CK caso a caso.
 
-## Como rodar
+**[Jogar no navegador](https://marianabsctba.github.io/Kill_Chain/)**, sem instalar nada.
+
+Powered by Mariana BS.
+
+![Mesa de trabalho: terminal, mapa da rede e objetivos](docs/prints/4_mesa.png)
+
+| | |
+|---|---|
+| ![Abertura](docs/prints/1_boot.png) | ![Escolha de personagem](docs/prints/2_perfil.png) |
+| Abertura | Identificação: nome, personagem e cor do terminal |
+
+## A campanha
+
+Os casos se desbloqueiam em sequência. Cada técnica que você identifica vira uma ficha ATT&CK com o que ela é e como se defender, e cada caso fechado ganha nota de C a S.
+
+| caso | onde | o que esperar |
+|---|---|---|
+| **[00] Primeiro dia no CSIRT** | laboratório do CSIRT | treinamento guiado: terminal, logs e objetivos |
+| **[01] Plantão no Santa Clara** | hospital em Recife | primeiro incidente real, contra o relógio |
+| **[02] Operação Caça à Quadrilha** | ambiente de investigação | montar o dossiê de indicadores da campanha |
+| **[03] Turno Cego** | cooperativa de saúde | nem todo alerta é o que parece |
+| **[04] Folha Fantasma** | prefeitura no interior de Minas | fraude em pagamentos e identidade abusada |
+| **[05] Água em Alerta** | saneamento no sertão pernambucano | TI e operação: separar fato de suspeita |
+
+Sem spoilers aqui: as técnicas de cada caso só aparecem quando você as descobre.
+
+![Menu de casos](docs/prints/3_menu.png)
+
+### Comandos
+
+`help`, `ls`, `cd`, `cat`, `grep`, `hosts`, `connect`, `mail`, `objetivos`, `responder`, `decode`, `bloquear`, `isolar`, `desativar`, `fichas` e `tema`. Digite `help` no jogo para ver o uso de cada um. Ações de contenção erradas custam tempo.
+
+## Como rodar localmente
 
 1. Instale a [Godot 4.7](https://godotengine.org/download) (versão padrão, não precisa da .NET).
 2. Abra a Godot, clique em **Importar** e escolha o arquivo `project.godot` desta pasta.
@@ -23,7 +55,16 @@ scripts/ui_theme.gd     paleta e tema visual
 shaders/crt.gdshader    efeito de monitor CRT
 missions/*.json         casos jogáveis
 tests/                  teste automático e gerador de prints
+docs/prints/            prints usados neste README
 ```
+
+Para regerar os prints (precisa de janela, não roda em `--headless`):
+
+```
+godot --path . --resolution 1600x900 res://tests/screenshots.tscn
+```
+
+Eles são salvos na pasta de dados do usuário da Godot; copie para `docs/prints/`.
 
 ## Missões
 

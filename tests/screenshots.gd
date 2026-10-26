@@ -25,7 +25,8 @@ func _ready() -> void:
 
 	_main._start_mission(Game.list_missions()[0])
 	var term: Terminal = _main._terminal
-	for cmd in ["cat leia-me.txt", "connect lab", "grep codigo /logs/treino.log"]:
+	# Para antes do grep para o print não entregar a resposta do treinamento.
+	for cmd in ["cat leia-me.txt", "connect lab", "ls /logs"]:
 		term.run(cmd)
 		await _wait(0.3)
 	await _wait(1.2)

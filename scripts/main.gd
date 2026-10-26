@@ -258,7 +258,7 @@ func _show_menu() -> void:
 	_clear()
 	_screen = "menu"
 	var box := _center_panel(760)
-	_label(box, "KILL//CHAIN", UiTheme.accent, 30)
+	_label(box, "KILL CHAIN", UiTheme.accent, 30)
 	_label(box, Game.fmt("Bem-vind{o|a}, {nome}. Escolha um caso."), UiTheme.DIM)
 
 	var missions := Game.list_missions()
@@ -325,7 +325,7 @@ func _build_desk() -> void:
 	var bar := HBoxContainer.new()
 	bar.add_theme_constant_override("separation", 24)
 	top.add_child(bar)
-	_label(bar, "KILL//CHAIN", UiTheme.accent, 18)
+	_label(bar, "KILL CHAIN", UiTheme.accent, 18)
 	_mission_label = _label(bar, "", UiTheme.TEXT)
 	_mission_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	var spacer := Control.new()
