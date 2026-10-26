@@ -1,0 +1,368 @@
+{
+  "id": "06_virada_do_pix",
+  "requer": "05_agua_em_alerta",
+  "dificuldade": 6,
+  "titulo": "[06] A Virada do PIX",
+  "resumo": "Fintech fictícia em São Paulo: fraude em homologação, sessão suspeita e corrida para preservar transações.",
+  "intro": "17h52, sexta-feira. A fintech fictícia PontePay opera transferências PIX em todo o Brasil. O antifraude aponta alteração de favorecido, enquanto o time financeiro insiste que um teste foi autorizado. {nome}, separe homologação de produção antes de conter. Nenhum pagamento a terceiros ou sistema real é acessado.",
+  "inicio": "estacao",
+  "tempo": 1800,
+  "tempo_rotulo": "janela de resposta",
+  "penalidade": 90,
+  "hosts": {
+    "estacao": {
+      "nome": "Mesa CSIRT",
+      "ip": "10.80.0.21",
+      "tipo": "estacao",
+      "pos": [
+        0.05,
+        0.5
+      ],
+      "oculto": false,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/chamados/urgente.txt": "INC-6001: lote PIX-884 teve beneficiário divergente em ambiente PRODUCAO. Teste PIX-883 foi autorizado apenas em HOMOLOGACAO. Não suspender PIX inteiro. Preservar trilha e reter PIX-884 até revisão humana.",
+        "/notas/mudancas.txt": "Mudança MC-442: 17h00-18h00, usuário qa_automacao, origem 10.80.9.40, exclusivamente HOMOLOGACAO. svc_pix_prod tem acesso em produção apenas por aplicativo API-01, 10.80.20.10."
+      }
+    },
+    "siem": {
+      "nome": "SIEM e antifraude",
+      "ip": "10.80.0.30",
+      "tipo": "servidor",
+      "pos": [
+        0.27,
+        0.2
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/logs/correlacao.log": [
+          "17:21 evento=teste_pix lote=PIX-883 ambiente=HOMOLOGACAO origem=10.80.9.40 conta=qa_automacao",
+          "17:48 evento=login_incomum conta=svc_pix_prod origem=10.80.10.66 ambiente=PRODUCAO",
+          "17:49 evento=alteracao_favorecido lote=PIX-884 ambiente=PRODUCAO conta=svc_pix_prod",
+          "17:50 evento=alerta_risco dominio=conciliacao-suporte.example origem=10.80.20.10",
+          "17:51 evento=teste_pix lote=PIX-883 ambiente=HOMOLOGACAO origem=10.80.9.40"
+        ]
+      }
+    },
+    "iam": {
+      "nome": "IAM da fintech",
+      "ip": "10.80.0.10",
+      "tipo": "dc",
+      "pos": [
+        0.52,
+        0.2
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/logs/sessoes.log": [
+          "17:21 conta=qa_automacao origem=10.80.9.40 destino=HOMOLOGACAO decisao=autorizado",
+          "17:48 conta=svc_pix_prod origem=10.80.10.66 destino=API-01 decisao=fora_do_perfil token=TK-601",
+          "17:49 conta=svc_pix_prod origem=10.80.10.66 destino=API-01 decisao=fora_do_perfil token=TK-601"
+        ],
+        "/politica.txt": "qa_automacao: testes somente homologação. svc_pix_prod: token de aplicação restrito à API-01. Sessão iniciada fora da API-01 exige revogação e investigação."
+      }
+    },
+    "workstation": {
+      "nome": "Estação CON-06",
+      "ip": "10.80.10.66",
+      "tipo": "estacao",
+      "pos": [
+        0.3,
+        0.76
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "comprometido",
+      "arquivos": {
+        "/logs/edr.log": [
+          "17:40 processo=explorer.exe assinatura=valida",
+          "17:47 processo=integrador_contabil.exe assinatura=ausente usuario=analista_conciliacao",
+          "17:48 processo=integrador_contabil.exe evento=uso_sessao_anomalo conta=svc_pix_prod token=TK-601",
+          "17:50 processo=antivirus.exe status=normal"
+        ],
+        "/logs/browser.log": [
+          "17:44 usuario=analista_conciliacao site=portal.pontepay.example resultado=ok",
+          "17:46 usuario=analista_conciliacao arquivo=ajuste_conciliacao.html origem=mensagem_externa",
+          "17:47 usuario=analista_conciliacao arquivo=ajuste_conciliacao.html evento=aberto"
+        ]
+      }
+    },
+    "api": {
+      "nome": "API-01 PIX",
+      "ip": "10.80.20.10",
+      "tipo": "servidor",
+      "pos": [
+        0.77,
+        0.22
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "alerta",
+      "arquivos": {
+        "/logs/auditoria.log": [
+          "17:21 lote=PIX-883 ambiente=HOMOLOGACAO operacao=teste conta=qa_automacao resultado=autorizado",
+          "17:49 lote=PIX-884 ambiente=PRODUCAO operacao=alteracao_favorecido conta=svc_pix_prod origem=10.80.10.66 resultado=registrado",
+          "17:50 lote=PIX-884 ambiente=PRODUCAO operacao=liquidacao resultado=retido_antifraude",
+          "17:51 lote=PIX-883 ambiente=HOMOLOGACAO operacao=teste resultado=ok"
+        ],
+        "/logs/dns.log": [
+          "17:45 dominio=monitor.pontepay.example resposta=interno",
+          "17:50 dominio=conciliacao-suporte.example resposta=198.51.100.150 indicador=dominio_raro"
+        ]
+      }
+    },
+    "firewall": {
+      "nome": "Firewall de saída",
+      "ip": "10.80.0.1",
+      "tipo": "firewall",
+      "pos": [
+        0.78,
+        0.7
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/logs/saida.log": [
+          "17:21 origem=10.80.9.40 destino=10.80.20.10 servico=homologacao status=permitido",
+          "17:50 origem=10.80.20.10 destino=198.51.100.150 porta=443 status=permitido indicador=comunicacao_atipica",
+          "17:51 origem=10.80.20.10 destino=198.51.100.150 porta=443 status=permitido indicador=comunicacao_atipica",
+          "17:52 origem=10.80.30.10 destino=10.80.20.10 servico=auditoria status=permitido"
+        ]
+      }
+    },
+    "cofre": {
+      "nome": "Auditoria imutável",
+      "ip": "10.80.30.10",
+      "tipo": "backup",
+      "pos": [
+        0.94,
+        0.5
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/relatorios/parecer.txt": "PIX-883: homologação autorizada. PIX-884: alteração de favorecido em produção, retenção preventiva confirmada e liquidação não executada. Contenção apropriada: bloquear IP suspeito, isolar CON-06, desativar svc_pix_prod e exigir reemissão segura do token. A operação PIX geral deve permanecer disponível."
+      }
+    }
+  },
+  "links": [
+    [
+      "estacao",
+      "siem"
+    ],
+    [
+      "siem",
+      "iam"
+    ],
+    [
+      "iam",
+      "workstation"
+    ],
+    [
+      "workstation",
+      "api"
+    ],
+    [
+      "api",
+      "firewall"
+    ],
+    [
+      "api",
+      "cofre"
+    ]
+  ],
+  "emails": [
+    {
+      "quando": "inicio",
+      "de": "Helena Prado <helena@aurora.example>",
+      "assunto": "Plantão: possível fraude em PIX",
+      "corpo": "{nome}, o suporte quer parar todas as transferências. Ainda não há evidência para isso. Verifique primeiro a mudança autorizada e o lote de produção."
+    },
+    {
+      "quando": "o5",
+      "de": "Bruna Nascimento <bruna@pontepay.example>",
+      "assunto": "Diretoria quer resposta",
+      "corpo": "O antifraude reteve o lote, mas o serviço PIX permanece disponível. Preciso de uma linha do tempo com a diferença entre teste autorizado e incidente confirmado."
+    }
+  ],
+  "objetivos": [
+    {
+      "id": "o1",
+      "tipo": "ler",
+      "host": "estacao",
+      "arquivo": "/chamados/urgente.txt",
+      "texto": "Leia o chamado e preserve a operação PIX",
+      "dica": "Entenda o impacto antes de tomar qualquer ação.",
+      "revela": [
+        "siem",
+        "iam"
+      ]
+    },
+    {
+      "id": "o2",
+      "tipo": "resposta",
+      "chave": "teste",
+      "valor": "PIX-883",
+      "texto": "Identifique o lote de homologação autorizado",
+      "dica": "Compare a janela de mudança com a correlação do SIEM.",
+      "evidencias": [
+        "estacao:/notas/mudancas.txt",
+        "siem:/logs/correlacao.log"
+      ],
+      "revela": [
+        "workstation"
+      ]
+    },
+    {
+      "id": "o3",
+      "tipo": "resposta",
+      "chave": "conta",
+      "valor": "svc_pix_prod",
+      "texto": "Determine qual credencial foi usada fora do perfil",
+      "dica": "Valide a origem da sessão e a política de uso.",
+      "evidencias": [
+        "iam:/logs/sessoes.log",
+        "iam:/politica.txt"
+      ],
+      "revela": [
+        "api"
+      ],
+      "fichas": [
+        "T1078"
+      ]
+    },
+    {
+      "id": "o4",
+      "tipo": "resposta",
+      "chave": "anexo",
+      "valor": "ajuste_conciliacao.html",
+      "texto": "Rastreie o arquivo aberto pouco antes da anomalia",
+      "dica": "A navegação de usuário antecedeu o uso suspeito da sessão?",
+      "evidencias": [
+        "workstation:/logs/browser.log",
+        "workstation:/logs/edr.log"
+      ],
+      "fichas": [
+        "T1204.002"
+      ]
+    },
+    {
+      "id": "o5",
+      "tipo": "resposta",
+      "chave": "lote",
+      "valor": "PIX-884",
+      "texto": "Identifique o lote de produção com alteração indevida",
+      "dica": "Diferencie homologação e produção; encontre a operação de alteração.",
+      "evidencias": [
+        "siem:/logs/correlacao.log",
+        "api:/logs/auditoria.log"
+      ],
+      "fichas": [
+        "T1565.001"
+      ],
+      "revela": [
+        "firewall"
+      ]
+    },
+    {
+      "id": "o6",
+      "tipo": "resposta",
+      "chave": "token",
+      "valor": "TK-601",
+      "texto": "Correlacione o identificador de sessão entre IAM e endpoint",
+      "dica": "A mesma credencial pode aparecer em mais de um log, mas o token correlaciona eventos específicos.",
+      "evidencias": [
+        "iam:/logs/sessoes.log",
+        "workstation:/logs/edr.log"
+      ]
+    },
+    {
+      "id": "o7",
+      "tipo": "resposta",
+      "chave": "ip",
+      "valor": "198.51.100.150",
+      "texto": "Confirme a comunicação externa em DNS e firewall",
+      "dica": "Não confunda uma resolução DNS com conexão comprovada.",
+      "evidencias": [
+        "api:/logs/dns.log",
+        "firewall:/logs/saida.log"
+      ],
+      "fichas": [
+        "T1071.001"
+      ],
+      "revela": [
+        "cofre"
+      ]
+    },
+    {
+      "id": "o8",
+      "tipo": "comando",
+      "comando": "bloquear",
+      "alvo": "198.51.100.150",
+      "texto": "Bloqueie somente o indicador externo confirmado",
+      "dica": "Evite bloquear a rede do Banco Central ou serviços legítimos."
+    },
+    {
+      "id": "o9",
+      "tipo": "comando",
+      "comando": "isolar",
+      "alvo": "workstation",
+      "texto": "Isole o endpoint usado para a atividade suspeita",
+      "dica": "Não interrompa API-01, que atende transações legítimas."
+    },
+    {
+      "id": "o10",
+      "tipo": "comando",
+      "comando": "desativar",
+      "alvo": "svc_pix_prod",
+      "texto": "Revogue a identidade abusada",
+      "dica": "A contenção exige nova credencial de produção de forma controlada.",
+      "estados": {
+        "api": "seguro"
+      }
+    },
+    {
+      "id": "o11",
+      "tipo": "ler",
+      "host": "cofre",
+      "arquivo": "/relatorios/parecer.txt",
+      "texto": "Confirme o destino do lote e a continuidade operacional",
+      "dica": "Retenção e liquidação são estados diferentes."
+    }
+  ],
+  "fichas": {
+    "T1078": {
+      "nome": "Contas válidas",
+      "descricao": "Sessões legítimas podem ser abusadas fora do perfil.",
+      "defesa": "Limite tokens por origem, aplique menor privilégio e monitore sessões.",
+      "url": "https://attack.mitre.org/techniques/T1078/"
+    },
+    "T1204.002": {
+      "nome": "Execução pelo usuário: arquivo malicioso",
+      "descricao": "Abertura de um arquivo suspeito antecedeu atividade anômala, mas a cadeia causal completa requer mais análise.",
+      "defesa": "Isole anexos, registre a cadeia de processos e valide reputação.",
+      "url": "https://attack.mitre.org/techniques/T1204/002/"
+    },
+    "T1565.001": {
+      "nome": "Manipulação de dados armazenados",
+      "descricao": "Alteração não autorizada de um registro financeiro pode afetar integridade.",
+      "defesa": "Auditoria imutável, segregação de funções e dupla aprovação.",
+      "url": "https://attack.mitre.org/techniques/T1565/001/"
+    },
+    "T1071.001": {
+      "nome": "Protocolo de aplicação: web",
+      "descricao": "Conexões HTTPS atípicas podem carregar comunicação de comando e controle.",
+      "defesa": "Cruze DNS, firewall e telemetria de endpoint.",
+      "url": "https://attack.mitre.org/techniques/T1071/001/"
+    }
+  },
+  "debrief": "A PontePay preservou seu serviço PIX, {nome}. O teste de homologação era legítimo, mas PIX-884 sofreu alteração indevida em produção. A liquidação foi retida e nenhuma transferência desse lote foi confirmada. Contenção seletiva, revogação de credenciais e auditoria preservaram a operação. Ainda é necessário investigar a causalidade entre o arquivo aberto e o incidente.",
+  "falha": "A janela acabou. O antifraude manteve a retenção preventiva, mas a contenção técnica ainda não estava completa."
+}
