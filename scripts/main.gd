@@ -159,8 +159,11 @@ func _show_boot() -> void:
 	label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	label.offset_left = 48
 	label.offset_top = 40
-	# Deixa o clique passar para _unhandled_input e avançar a abertura.
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Os controles consomem o clique antes de _unhandled_input, então a
+	# abertura trata o clique aqui mesmo.
+	label.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.pressed and _screen == "boot":
+			_after_boot())
 	_root.add_child(label)
 
 	var ok := "[color=%s][lb] ok [rb][/color] " % UiTheme.hex(UiTheme.OK)
