@@ -1,0 +1,33 @@
+name: Testes do Kill Chain
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "missions/**"
+      - "scripts/**"
+      - "scenes/**"
+      - "tests/**"
+      - "project.godot"
+      - ".github/workflows/testes.yml"
+  workflow_dispatch:
+
+jobs:
+  validar-jogo:
+    name: Validar Godot e campanha
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+      - name: Instalar Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.0
+          use-dotnet: false
+      - name: Importar recursos e verificar scripts
+        run: godot --headless --path . --editor --import --quit
+      - name: Testar treinamento
+        run: godot --headless --path . res://tests/playthrough.tscn
+      - name: Testar campanha completa
+        run: godot --headless --path . res://tests/campanha.tscn
