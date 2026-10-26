@@ -51,3 +51,13 @@ godot --headless --path . res://tests/playthrough.tscn
 ```
 
 Joga o treinamento inteiro pelo terminal e retorna erro se algo quebrar.
+
+## Progressão e qualidade da investigação
+
+Os casos são sequenciais quando definem `requer` com o ID do caso anterior. Concluir uma missão libera a próxima; os recordes são salvos localmente em `user://progresso.cfg`.
+
+A pontuação vai de 0 a 1.000: 600 pontos por fechar os objetivos, até 200 por fontes distintas consultadas com `cat`, e até 200 por eficiência (tempo restante nas missões cronometradas). Respostas incorretas descontam 35 pontos; contenções indevidas descontam 75, além da penalidade de tempo da missão. Classificações: C, B, A e S.
+
+Missões avançadas podem definir `evidencias` em objetivos do tipo `resposta`: uma lista de `host_id:/caminho` que precisa ser consultada com `cat` antes de aceitar a resposta. Isso exige correlação entre fontes, sem dar a solução na dica. `grep` serve para localizar indícios; abra com `cat` os registros escolhidos para sustentar sua conclusão.
+
+A progressão planejada é gradual: treinamento guiado, incidente com cronômetro, investigação de infraestrutura inteiramente simulada, e caso complexo com falsos positivos e necessidade de confirmação cruzada. Nunca conecte o jogo a infraestrutura real de terceiros.
