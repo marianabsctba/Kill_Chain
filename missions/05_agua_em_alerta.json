@@ -23,7 +23,8 @@
       "estado": "normal",
       "arquivos": {
         "/chamado.txt": "CH-5120: ADM-04 com alerta de segurança. SENSOR-02 detectou oscilação de pressão. Scanner autorizado 10.72.9.9 operou das 04h às 05h. Não desligue CLP, SCADA, gateway OT ou fornecimento.",
-        "/escopo.txt": "Apenas estação ADM-04, conta suporte_terceiro e IP externo confirmado podem ser contidos. Toda decisão operacional depende da engenharia industrial."
+        "/escopo.txt": "Apenas estação ADM-04, conta suporte_terceiro e IP externo confirmado podem ser contidos. Toda decisão operacional depende da engenharia industrial.",
+        "/notas/contrato.txt": "Cadastro de terceiro: controle VN-SD-17, responsabilidade de manutenção administrativa."
       }
     },
     "siem": {
@@ -65,7 +66,11 @@
           "04:11 conta=suporte_terceiro origem=10.72.10.44 destino=JMP-OT resultado=sucesso",
           "04:12 conta=suporte_terceiro origem=10.72.10.44 destino=JMP-OT resultado=sucesso"
         ],
-        "/politica.txt": "suporte_terceiro permitido apenas 09h-17h com chamado aprovado. Nenhum chamado autorizado nesta madrugada. engenharia_ot tem escala operacional aprovada."
+        "/politica.txt": "suporte_terceiro permitido apenas 09h-17h com chamado aprovado. Nenhum chamado autorizado nesta madrugada. engenharia_ot tem escala operacional aprovada.",
+        "/logs/terceiros.log": [
+          "03:58 fornecedor_ref=VN-SD-17 conta=suporte_terceiro equipamento=ADM-04 cadastro=integracao",
+          "04:11 fornecedor_ref=VN-SD-17 conta=suporte_terceiro janela=irregular"
+        ]
       }
     },
     "adm": {
@@ -90,6 +95,11 @@
         "/logs/dns.log": [
           "04:05 dominio=portal.aguas-sertão.example origem=interno",
           "04:15 dominio=atualizacao-telemetria.example ip=203.0.113.92"
+        ],
+        "/logs/reconhecimento.log": [
+          "04:04 processo=inventario_ot.exe alvo=JMP-OT permitido=sim",
+          "04:12 processo=cliente_suporte.exe atividade=descoberta_configuracao_rede interface=ADM-04 permitido=nao",
+          "04:13 processo=cliente_suporte.exe atividade=enumeracao_servicos alvo=10.72.20.20 permitido=nao"
         ]
       }
     },
@@ -131,7 +141,11 @@
           "04:14 conta=suporte_terceiro acao=consulta_painel comando_industrial=nao",
           "04:19 conta=engenharia_ot tipo=acesso_autorizado"
         ],
-        "/politica.txt": "Somente registros simulados. Consulta de painel não comprova alteração em CLP. Não executar comandos industriais."
+        "/politica.txt": "Somente registros simulados. Consulta de painel não comprova alteração em CLP. Não executar comandos industriais.",
+        "/logs/acesso_servicos.log": [
+          "04:12 origem=10.72.10.44 destino=10.72.20.20 portas=22,443 descricao=sondagem_servicos_simulada",
+          "04:14 origem=10.72.10.44 destino=10.72.20.20 atividade=consulta_painel sem_comando_industrial"
+        ]
       }
     },
     "hist": {
@@ -202,7 +216,8 @@
       "revela": [
         "siem",
         "ad"
-      ]
+      ],
+      "fichas": []
     },
     {
       "id": "o2",
@@ -217,7 +232,8 @@
       ],
       "revela": [
         "adm"
-      ]
+      ],
+      "fichas": []
     },
     {
       "id": "o3",
@@ -233,9 +249,7 @@
       "revela": [
         "jump"
       ],
-      "fichas": [
-        "T1078"
-      ]
+      "fichas": []
     },
     {
       "id": "o4",
@@ -248,11 +262,24 @@
         "adm:/logs/edr.log",
         "siem:/logs/alertas.log"
       ],
-      "fichas": [
-        "T1059.001"
-      ],
+      "fichas": [],
       "revela": [
         "fw"
+      ]
+    },
+    {
+      "id": "o4b",
+      "tipo": "resposta",
+      "chave": "atividade",
+      "valor": "descoberta_configuracao_rede",
+      "texto": "Reconheça a descoberta indevida de configuração de rede",
+      "dica": "Compare a ferramenta de inventário autorizada com a atividade desconhecida.",
+      "evidencias": [
+        "adm:/logs/reconhecimento.log",
+        "adm:/logs/edr.log"
+      ],
+      "fichas": [
+        "T1016"
       ]
     },
     {
@@ -266,9 +293,7 @@
         "adm:/logs/dns.log",
         "fw:/logs/fluxos.log"
       ],
-      "fichas": [
-        "T1071.001"
-      ]
+      "fichas": []
     },
     {
       "id": "o6",
@@ -283,6 +308,22 @@
       ],
       "revela": [
         "hist"
+      ],
+      "fichas": []
+    },
+    {
+      "id": "o6b",
+      "tipo": "resposta",
+      "chave": "portas",
+      "valor": "22,443",
+      "texto": "Identifique a sondagem de serviços do gateway sem confundi-la com comando industrial",
+      "dica": "Correlacione o processo da estação com os registros do gateway.",
+      "evidencias": [
+        "adm:/logs/reconhecimento.log",
+        "jump:/logs/acesso_servicos.log"
+      ],
+      "fichas": [
+        "T1046"
       ]
     },
     {
@@ -295,7 +336,8 @@
       "evidencias": [
         "hist:/logs/pressao.log",
         "hist:/relatorios/engenharia.txt"
-      ]
+      ],
+      "fichas": []
     },
     {
       "id": "o8",
@@ -303,7 +345,8 @@
       "comando": "bloquear",
       "alvo": "203.0.113.92",
       "texto": "Bloqueie o destino externo confirmado",
-      "dica": "Preserve endereços internos da operação."
+      "dica": "Preserve endereços internos da operação.",
+      "fichas": []
     },
     {
       "id": "o9",
@@ -311,7 +354,8 @@
       "comando": "isolar",
       "alvo": "adm",
       "texto": "Isole a estação administrativa comprometida",
-      "dica": "Não isole hosts industriais."
+      "dica": "Não isole hosts industriais.",
+      "fichas": []
     },
     {
       "id": "o10",
@@ -322,27 +366,22 @@
       "dica": "Proteja as contas essenciais da engenharia.",
       "estados": {
         "jump": "seguro"
-      }
+      },
+      "fichas": []
     }
   ],
   "fichas": {
-    "T1078": {
-      "nome": "Contas válidas",
-      "descricao": "Credenciais existentes podem ser usadas fora do escopo.",
-      "defesa": "Acesso just-in-time, MFA e aprovação de sessões.",
-      "url": "https://attack.mitre.org/techniques/T1078/"
+    "T1016": {
+      "nome": "Descoberta de configuração de rede",
+      "descricao": "Processo consultou interfaces e configurações fora da rotina.",
+      "defesa": "Monitore enumeração de rede e limite privilégios administrativos.",
+      "url": "https://attack.mitre.org/techniques/T1016/"
     },
-    "T1059.001": {
-      "nome": "PowerShell",
-      "descricao": "Interpretadores podem ser abusados durante acesso indevido.",
-      "defesa": "Correlacione árvore de processos e autenticação.",
-      "url": "https://attack.mitre.org/techniques/T1059/001/"
-    },
-    "T1071.001": {
-      "nome": "Protocolo de aplicação: web",
-      "descricao": "Canais web podem carregar comunicações suspeitas.",
-      "defesa": "DNS, firewall e EDR devem confirmar o tráfego.",
-      "url": "https://attack.mitre.org/techniques/T1071/001/"
+    "T1046": {
+      "nome": "Descoberta de serviços de rede",
+      "descricao": "Registros indicam sondagem de serviços no gateway OT.",
+      "defesa": "Segmente redes OT, monitore tentativas e permita somente origens aprovadas.",
+      "url": "https://attack.mitre.org/techniques/T1046/"
     }
   },
   "debrief": "A estação e a identidade comprometidas foram contidas sem interromper o tratamento de água, {nome}. A oscilação hidráulica era independente do incidente digital. Causalidade precisa de evidência, não de coincidência.",
