@@ -264,6 +264,15 @@ func _show_menu() -> void:
 	var missions := Game.list_missions()
 	if missions.is_empty():
 		_label(box, "nenhuma missão encontrada em %s" % Game.MISSIONS_DIR, UiTheme.WARN)
+	# Com muitos casos a lista rola, para o painel não passar da tela.
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size.y = 520
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 10)
+	scroll.add_child(list)
 	for m in missions:
 		var b := Button.new()
 		var unlocked := Game.is_mission_unlocked(m)
@@ -279,13 +288,26 @@ func _show_menu() -> void:
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		b.pressed.connect(_start_mission.bind(m))
-		box.add_child(b)
+		list.add_child(b)
 
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 16)
+	box.add_child(row)
+	var matrix := Button.new()
+	matrix.text = "matriz ATT&CK"
+	matrix.pressed.connect(_show_matrix)
+	row.add_child(matrix)
+	if Game.season_complete():
+		var ending := Button.new()
+		ending.text = "encerramento da temporada"
+		ending.pressed.connect(_show_the_end)
+		row.add_child(ending)
 	var profile := Button.new()
 	profile.text = "editar perfil"
 	profile.flat = true
 	profile.pressed.connect(_show_profile)
-	box.add_child(profile)
+	row.add_child(profile)
 	_label(box, "F2 liga/desliga o efeito CRT   F11 tela cheia", UiTheme.DIM, 12)
 
 
@@ -505,7 +527,35 @@ func _on_mission_finished() -> void:
 		for id in Game.unlocked_cards:
 			_label(box, "%s  %s" % [id, Game.card(id).get("nome", "")], UiTheme.accent)
 	var back := Button.new()
-	back.text = "VOLTAR AO MENU"
-	back.pressed.connect(_show_menu)
+	if Game.season_just_completed:
+		Game.season_just_completed = false
+		back.text = "CONTINUAR"
+		back.pressed.connect(_show_the_end)
+	else:
+		back.text = "VOLTAR AO MENU"
+		back.pressed.connect(_show_menu)
 	box.add_child(back)
 	glitch(0.9, 0.6)
+
+
+# Telas da temporada
+
+func _show_matrix() -> void:
+	_clear()
+	_screen = "matriz"
+	Season.build_matrix(_root, _show_menu)
+
+
+func _show_the_end() -> void:
+	_clear()
+	_screen = "fim"
+	Season.build_the_end(_root, {
+		"matriz": _show_matrix,
+		"certificado": _download_certificate,
+		"menu": _show_menu,
+	}, glitch)
+
+
+func _download_certificate() -> void:
+	var img: Image = await Season.certificate_image(self)
+	Season.save_certificate(img)

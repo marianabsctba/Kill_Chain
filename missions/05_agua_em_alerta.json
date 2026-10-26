@@ -345,6 +345,6 @@
       "url": "https://attack.mitre.org/techniques/T1071/001/"
     }
   },
-  "debrief": "A estação e a identidade comprometidas foram contidas sem interromper o tratamento de água. A oscilação hidráulica era independente do incidente digital. Causalidade precisa de evidência, não de coincidência.",
+  "debrief": "A estação e a identidade comprometidas foram contidas sem interromper o tratamento de água, {nome}. A oscilação hidráulica era independente do incidente digital. Causalidade precisa de evidência, não de coincidência.",
   "falha": "A janela acabou sem contenção suficiente. Reavalie as evidências e evite interromper sistemas essenciais."
 }

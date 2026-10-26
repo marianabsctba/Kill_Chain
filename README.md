@@ -31,9 +31,23 @@ Sem spoilers aqui: as técnicas de cada caso só aparecem quando você as descob
 
 ![Menu de casos](docs/prints/3_menu.png)
 
+### Matriz ATT&CK e fim de temporada
+
+O botão **matriz ATT&CK** no menu mostra as 14 táticas do MITRE ATT&CK e acende as técnicas conforme você fecha os casos. Clicando numa técnica, aparece a ficha com o que ela é e como se defender. As colunas apagadas mostram táticas que a temporada ainda não cobriu.
+
+![Matriz ATT&CK da temporada](docs/prints/5_matriz.png)
+
+Ao fechar o último caso, a temporada termina com a tela **THE END**, sua pontuação total e um **certificado em PNG** com seu nome, nota e técnicas descobertas, pronto para compartilhar.
+
+![Fim da temporada](docs/prints/6_fim.png)
+
 ### Comandos
 
-`help`, `ls`, `cd`, `cat`, `grep`, `hosts`, `connect`, `mail`, `objetivos`, `responder`, `decode`, `bloquear`, `isolar`, `desativar`, `fichas` e `tema`. Digite `help` no jogo para ver o uso de cada um. Ações de contenção erradas custam tempo.
+`help`, `ls`, `cd`, `cat`, `grep`, `hosts`, `connect`, `mail`, `objetivos`, `responder`, `decode`, `bloquear`, `isolar`, `desativar`, `fichas`, `arquivo` e `tema`. Digite `help` no jogo para ver o uso de cada um. Ações de contenção erradas custam tempo.
+
+`arquivo` consulta, só para leitura, as evidências de casos já encerrados: `arquivo` lista os casos, `arquivo <caso>` lista os arquivos e `arquivo <caso> <host>:<caminho>` abre um deles. Nas missões, um objetivo `{"tipo": "comando", "comando": "arquivo", "alvo": "<caso>:<host>:<caminho>"}` conclui quando a jogadora abre essa evidência.
+
+Fichas aceitam `"taticas": ["TA0008"]` para indicar a coluna da matriz quando a técnica não estiver no mapa padrão de `scripts/attack_data.gd`.
 
 ## Como rodar localmente
 

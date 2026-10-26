@@ -333,6 +333,6 @@
       "url": "https://attack.mitre.org/techniques/T1071/001/"
     }
   },
-  "debrief": "O lote foi retido e a tentativa de fraude documentada. Ação indevida não equivale a pagamento consumado. A investigação protegeu o serviço e preservou a auditoria.",
+  "debrief": "O lote foi retido e a tentativa de fraude documentada, {nome}. Ação indevida não equivale a pagamento consumado. A investigação protegeu o serviço e preservou a auditoria.",
   "falha": "A janela acabou sem contenção suficiente. Reavalie as evidências e evite interromper sistemas essenciais."
 }
