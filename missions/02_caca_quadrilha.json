@@ -179,9 +179,7 @@
       "valor": "203.0.113.66",
       "texto": "Registre o indicador de comando e controle comprovado",
       "dica": "Confira se o IP do dossiê coincide com os registros de conexão e o caso anterior.",
-      "fichas": [
-        "T1595"
-      ]
+      "fichas": []
     }
   ],
   "fichas": {
@@ -190,12 +188,6 @@
       "descricao": "Adversários podem usar protocolos web em comunicação de comando e controle.",
       "defesa": "Correlacione telemetria de rede e endpoint, monitorando destinos recorrentes.",
       "url": "https://attack.mitre.org/techniques/T1071/001/"
-    },
-    "T1595": {
-      "nome": "Varredura ativa",
-      "descricao": "Técnica de reconhecimento do ATT&CK. Neste cenário não há prova de varredura ativa, apenas uma referência didática adicional.",
-      "defesa": "Não conclua que ocorreu varredura sem logs específicos de sondagem.",
-      "url": "https://attack.mitre.org/techniques/T1595/"
     }
   },
   "debrief": "Dossiê concluído, {nome}. Você correlacionou a campanha MAROLA, os indicadores simulados e uma segunda organização mencionada. A menção não demonstra que a outra organização foi comprometida. O CSIRT pode preservar o material fictício como relatório de treinamento, sem invasão real ou atribuição pessoal.",
