@@ -1,0 +1,364 @@
+{
+  "id": "03_turno_cego",
+  "requer": "02_caca_quadrilha",
+  "dificuldade": 3,
+  "titulo": "[03] Turno Cego",
+  "resumo": "Um falso positivo disputa a atenção com um movimento lateral discreto em uma cooperativa de saúde.",
+  "intro": "02h14, Cooperativa Horizonte, Recife. O SIEM disparou dezenas de alertas de scanner de vulnerabilidade, mas um operador avisou que uma conta de serviço acessou o financeiro fora do horário. Sua missão é cruzar autenticação, endpoint, rede e backups. Nenhuma fonte conta a história inteira. Uma escolha precipitada pode desligar processos legítimos.",
+  "inicio": "estacao",
+  "tempo": 1200,
+  "tempo_rotulo": "janela de resposta",
+  "penalidade": 60,
+  "hosts": {
+    "estacao": {
+      "nome": "Mesa CSIRT",
+      "ip": "10.40.0.21",
+      "tipo": "estacao",
+      "pos": [
+        0.06,
+        0.5
+      ],
+      "oculto": false,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/chamados/abertura.txt": "Ticket CH-0084, 02:14. Scanner autorizado executou rotina das 02:00 às 02:20. Uma equipe relatou acesso inesperado ao servidor FIN-02. Escopo: identificar falso positivo, validar anomalia, conter apenas o ativo e a conta comprometidos. Não desligar o monitoramento nem o backup.",
+        "/notas/matriz.txt": "O IP 10.40.9.8 pertence ao scanner de vulnerabilidades homologado. O host FIN-02 tem IP 10.40.20.42. A conta svc_faturamento deve executar lotes somente entre 06:00 e 22:00."
+      }
+    },
+    "siem": {
+      "nome": "SIEM Aurora",
+      "ip": "10.40.0.30",
+      "tipo": "servidor",
+      "pos": [
+        0.33,
+        0.2
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/logs/alertas.log": [
+          "02:01 alerta=port_scan origem=10.40.9.8 destino=10.40.20.42 classe=ruido_esperado",
+          "02:03 alerta=port_scan origem=10.40.9.8 destino=10.40.20.20 classe=ruido_esperado",
+          "02:07 alerta=login_incomum conta=svc_faturamento origem=10.40.10.57 destino=10.40.20.42 severidade=media",
+          "02:08 alerta=login_incomum conta=svc_faturamento origem=10.40.10.57 destino=10.40.20.42 severidade=media",
+          "02:09 alerta=execucao_atipica host=FIN-02 processo=powershell.exe severidade=alta",
+          "02:11 alerta=dns_anomalo host=FIN-02 dominio=suporte-contabil.example severidade=alta",
+          "02:12 alerta=port_scan origem=10.40.9.8 destino=10.40.30.10 classe=ruido_esperado"
+        ]
+      }
+    },
+    "ad": {
+      "nome": "Controlador de identidade",
+      "ip": "10.40.0.10",
+      "tipo": "dc",
+      "pos": [
+        0.52,
+        0.5
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/logs/auth.log": [
+          "01:55 usuario=svc_backup origem=10.40.30.10 destino=BACK-01 resultado=ok esperado=sim",
+          "02:05 usuario=operador_noc origem=10.40.0.55 destino=SIEM resultado=ok esperado=sim",
+          "02:07 usuario=svc_faturamento origem=10.40.10.57 destino=FIN-02 logon_tipo=3 resultado=ok esperado=nao",
+          "02:08 usuario=svc_faturamento origem=10.40.10.57 destino=FIN-02 logon_tipo=3 resultado=ok esperado=nao",
+          "02:10 usuario=svc_backup origem=10.40.30.10 destino=BACK-01 resultado=ok esperado=sim"
+        ],
+        "/politicas/contas.txt": "svc_faturamento: uso aprovado no aplicativo FAT-01, janela 06:00 a 22:00, acesso ao FIN-02 não previsto. svc_backup: acesso de backup noturno aprovado."
+      }
+    },
+    "endpoint": {
+      "nome": "Estação FAT-01",
+      "ip": "10.40.10.57",
+      "tipo": "estacao",
+      "pos": [
+        0.32,
+        0.77
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "comprometido",
+      "arquivos": {
+        "/logs/edr.log": [
+          "01:59 host=FAT-01 processo=explorer.exe usuario=usuario_local assinatura=valida",
+          "02:04 host=FAT-01 processo=outlook.exe usuario=analista_financeiro status=normal",
+          "02:06 host=FAT-01 processo=script_sync.exe usuario=svc_faturamento assinatura=ausente resultado=alerta",
+          "02:07 host=FAT-01 processo=script_sync.exe destino=FIN-02 identidade=svc_faturamento evento=uso_anomalo_credencial",
+          "02:13 host=FAT-01 processo=antivirus.exe assinatura=valida status=normal"
+        ],
+        "/notas/inventario.txt": "Estação FAT-01 executa rotinas da cooperativa, mas não deve iniciar sessão de serviço no servidor FIN-02 às 02h."
+      }
+    },
+    "financeiro": {
+      "nome": "Servidor FIN-02",
+      "ip": "10.40.20.42",
+      "tipo": "servidor",
+      "pos": [
+        0.78,
+        0.23
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "alerta",
+      "arquivos": {
+        "/logs/processos.log": [
+          "02:00 processo=services.exe pai=wininit.exe evento=normal",
+          "02:08 processo=cmd.exe pai=servico_remoto usuario=svc_faturamento evento=execucao_suspeita",
+          "02:09 processo=powershell.exe pai=cmd.exe usuario=svc_faturamento evento=consulta_metadados_simulada sem_codigo_real",
+          "02:12 processo=backup_agent.exe usuario=svc_backup evento=normal"
+        ],
+        "/logs/dns.log": [
+          "02:04 dominio=updates.horizonte.example resultado=interno",
+          "02:11 dominio=suporte-contabil.example resposta=198.51.100.91 processo=powershell.exe indicador=conexao_suspeita",
+          "02:12 dominio=updates.horizonte.example resultado=interno"
+        ],
+        "/logs/acessos.log": [
+          "02:06 usuario=contabilidade recurso=relatorios resultado=ok",
+          "02:09 usuario=svc_faturamento recurso=relatorios_sigilosos resultado=ok origem=10.40.10.57",
+          "02:10 usuario=svc_faturamento recurso=folha_pagamento resultado=negado origem=10.40.10.57"
+        ]
+      }
+    },
+    "firewall": {
+      "nome": "Firewall de borda",
+      "ip": "10.40.0.1",
+      "tipo": "firewall",
+      "pos": [
+        0.75,
+        0.72
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/logs/fluxos.log": [
+          "02:02 origem=10.40.9.8 destino=10.40.20.42 acao=permitir regra=auditoria_autorizada",
+          "02:03 origem=10.40.9.8 destino=10.40.20.20 acao=permitir regra=auditoria_autorizada",
+          "02:11 origem=10.40.20.42 destino=198.51.100.91 porta=443 acao=permitir anomalia=beacon_simulado",
+          "02:12 origem=10.40.20.42 destino=198.51.100.91 porta=443 acao=permitir anomalia=beacon_simulado",
+          "02:13 origem=10.40.30.10 destino=10.40.20.42 acao=permitir regra=backup"
+        ]
+      }
+    },
+    "backup": {
+      "nome": "Servidor de backup",
+      "ip": "10.40.30.10",
+      "tipo": "backup",
+      "pos": [
+        0.91,
+        0.48
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "seguro",
+      "arquivos": {
+        "/logs/jobs.log": [
+          "01:50 job=FIN02_integridade status=ok",
+          "02:13 job=FIN02_incremental status=ok",
+          "02:14 job=FIN02_snapshot status=ok"
+        ],
+        "/notas/continuidade.txt": "Preservar evidências e sessões assistenciais. Snapshot verificado, mas recuperação só após erradicação da causa e revalidação de credenciais."
+      }
+    }
+  },
+  "links": [
+    [
+      "estacao",
+      "siem"
+    ],
+    [
+      "siem",
+      "ad"
+    ],
+    [
+      "ad",
+      "endpoint"
+    ],
+    [
+      "endpoint",
+      "financeiro"
+    ],
+    [
+      "financeiro",
+      "firewall"
+    ],
+    [
+      "firewall",
+      "backup"
+    ]
+  ],
+  "emails": [
+    {
+      "quando": "inicio",
+      "de": "Helena Prado <helena@aurora.example>",
+      "assunto": "CH-0084: não caia no scanner",
+      "corpo": "{nome}, aqui a investigação ficou mais difícil. O scanner pode ser ruído legítimo. Primeiro leia o chamado, depois use duas fontes independentes antes de fechar qualquer hipótese."
+    },
+    {
+      "quando": "o5",
+      "de": "Camila Torres <camila@horizonte.example>",
+      "assunto": "Impacto assistencial",
+      "corpo": "FIN-02 atende o financeiro, mas parar o serviço indiscriminadamente interrompe faturamento e convênios. Faça contenção específica e preserve backups."
+    }
+  ],
+  "objetivos": [
+    {
+      "id": "o1",
+      "tipo": "ler",
+      "host": "estacao",
+      "arquivo": "/chamados/abertura.txt",
+      "texto": "Leia o chamado e delimite o escopo",
+      "dica": "Antes de analisar alertas, entenda os ativos críticos e as atividades autorizadas.",
+      "revela": [
+        "siem",
+        "ad"
+      ]
+    },
+    {
+      "id": "o2",
+      "tipo": "resposta",
+      "chave": "ruido",
+      "valor": "10.40.9.8",
+      "texto": "Identifique a origem do ruído autorizado",
+      "dica": "Compare o log do SIEM com a relação de ativos homologados na estação.",
+      "evidencias": [
+        "estacao:/notas/matriz.txt",
+        "siem:/logs/alertas.log"
+      ],
+      "revela": [
+        "endpoint"
+      ]
+    },
+    {
+      "id": "o3",
+      "tipo": "resposta",
+      "chave": "conta",
+      "valor": "svc_faturamento",
+      "texto": "Descubra a conta realmente anômala",
+      "dica": "Cruze o login com a política de contas. Horário e destino pesam mais que a gravidade do alerta.",
+      "evidencias": [
+        "ad:/logs/auth.log",
+        "ad:/politicas/contas.txt"
+      ],
+      "revela": [
+        "financeiro"
+      ]
+    },
+    {
+      "id": "o4",
+      "tipo": "resposta",
+      "chave": "origem",
+      "valor": "10.40.10.57",
+      "texto": "Determine de onde partiu a sessão inesperada",
+      "dica": "Compare o controlador de identidade e os registros EDR da estação.",
+      "evidencias": [
+        "ad:/logs/auth.log",
+        "endpoint:/logs/edr.log"
+      ],
+      "fichas": [
+        "T1078"
+      ]
+    },
+    {
+      "id": "o5",
+      "tipo": "resposta",
+      "chave": "processo",
+      "valor": "powershell.exe",
+      "texto": "Identifique a execução suspeita em FIN-02",
+      "dica": "Relacionamentos de processos e identidade de execução ajudam a distinguir administração legítima de desvio.",
+      "evidencias": [
+        "financeiro:/logs/processos.log",
+        "siem:/logs/alertas.log"
+      ],
+      "fichas": [
+        "T1059.001"
+      ],
+      "revela": [
+        "firewall"
+      ]
+    },
+    {
+      "id": "o6",
+      "tipo": "resposta",
+      "chave": "destino",
+      "valor": "198.51.100.91",
+      "texto": "Confirme o indicador externo em duas fontes",
+      "dica": "Cruze a resolução DNS no servidor com o tráfego efetivamente observado no firewall.",
+      "evidencias": [
+        "financeiro:/logs/dns.log",
+        "firewall:/logs/fluxos.log"
+      ],
+      "revela": [
+        "backup"
+      ],
+      "fichas": [
+        "T1071.001"
+      ]
+    },
+    {
+      "id": "o7",
+      "tipo": "comando",
+      "comando": "bloquear",
+      "alvo": "198.51.100.91",
+      "texto": "Bloqueie apenas o IP externo confirmado",
+      "dica": "Não bloqueie endereços internos do scanner ou do backup."
+    },
+    {
+      "id": "o8",
+      "tipo": "comando",
+      "comando": "isolar",
+      "alvo": "endpoint",
+      "texto": "Isole a estação que originou o uso anômalo de credenciais",
+      "dica": "A evidência aponta para o host de origem, não para o controlador de domínio.",
+      "estados": {
+        "endpoint": "isolado"
+      }
+    },
+    {
+      "id": "o9",
+      "tipo": "comando",
+      "comando": "desativar",
+      "alvo": "svc_faturamento",
+      "texto": "Revogue a conta abusada",
+      "dica": "Use a mesma identidade confirmada em AD e EDR. Não desative a conta de backup.",
+      "estados": {
+        "financeiro": "seguro"
+      }
+    },
+    {
+      "id": "o10",
+      "tipo": "ler",
+      "host": "backup",
+      "arquivo": "/notas/continuidade.txt",
+      "texto": "Revise a continuidade e os critérios de recuperação",
+      "dica": "A contenção termina com validação de integridade, não com um botão verde.",
+      "fichas": []
+    }
+  ],
+  "fichas": {
+    "T1078": {
+      "nome": "Contas válidas",
+      "descricao": "Uso indevido de credenciais legítimas para acessar sistemas.",
+      "defesa": "MFA resistente a phishing, menor privilégio e alertas de autenticação anômala.",
+      "url": "https://attack.mitre.org/techniques/T1078/"
+    },
+    "T1059.001": {
+      "nome": "PowerShell",
+      "descricao": "Interpretador que pode ser abusado durante a execução de atividades suspeitas.",
+      "defesa": "Monitore criação de processos, PowerShell e sessões administrativas.",
+      "url": "https://attack.mitre.org/techniques/T1059/001/"
+    },
+    "T1071.001": {
+      "nome": "Protocolo de aplicação: web",
+      "descricao": "Canais web podem ocultar comunicações de comando e controle.",
+      "defesa": "Combine DNS, proxy, firewall, EDR e padrões temporais.",
+      "url": "https://attack.mitre.org/techniques/T1071/001/"
+    }
+  },
+  "debrief": "O turno cego exigiu correlação, {nome}. O scanner autorizado produzia alertas vistosos, enquanto a conta svc_faturamento acessava FIN-02 fora do horário. Logs de AD, EDR, processos, DNS e firewall sustentaram as decisões. O backup permaneceu operacional. Lição: confirmar fontes independentes, preservar continuidade e não inferir técnicas sem evidência.",
+  "falha": "A janela de resposta expirou e a cooperativa precisou acionar contingência. Revise a separação entre ruído autorizado e uso anômalo de contas."
+}
