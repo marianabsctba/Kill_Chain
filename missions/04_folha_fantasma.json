@@ -1,0 +1,338 @@
+{
+  "id": "04_folha_fantasma",
+  "requer": "03_turno_cego",
+  "dificuldade": 4,
+  "titulo": "[04] Folha Fantasma",
+  "resumo": "Prefeitura do interior de Minas: tentativa de fraude em lote de pagamento e identidade abusada.",
+  "intro": "07h16. Prefeitura fictícia de Serra Clara, Minas Gerais. O fechamento da folha se aproxima, e um favorecido foi alterado depois da aprovação. O lote está retido para validação.",
+  "inicio": "estacao",
+  "tempo": 1500,
+  "tempo_rotulo": "janela crítica",
+  "penalidade": 75,
+  "hosts": {
+    "estacao": {
+      "nome": "CSIRT",
+      "ip": "10.61.0.21",
+      "tipo": "estacao",
+      "pos": [
+        0.06,
+        0.5
+      ],
+      "oculto": false,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/chamado.txt": "INC-4107: lote LOTE-441 sofreu alteração de favorecido. Scanner autorizado 10.61.9.8 operou das 06:40 às 07:10. Não desligar folha nem auditoria. Pagamento ainda não confirmado.",
+        "/escopo.txt": "Conter apenas a estação LIC-01, a conta abusada e o IP externo comprovado. Não interferir no fechamento legítimo."
+      }
+    },
+    "siem": {
+      "nome": "SIEM",
+      "ip": "10.61.0.30",
+      "tipo": "servidor",
+      "pos": [
+        0.28,
+        0.2
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/logs/alertas.log": [
+          "06:52 categoria=scan origem=10.61.9.8 autorizado=sim",
+          "06:58 categoria=login conta=licitacoes_svc origem=10.61.10.44 destino=APP-PAG fora_janela=sim",
+          "07:01 categoria=alteracao_lote lote=LOTE-441 conta=licitacoes_svc",
+          "07:04 categoria=dns_raro destino=consulta-convenios.example",
+          "07:06 categoria=scan origem=10.61.9.8 autorizado=sim"
+        ]
+      }
+    },
+    "ad": {
+      "nome": "Identidade",
+      "ip": "10.61.0.10",
+      "tipo": "dc",
+      "pos": [
+        0.51,
+        0.2
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/logs/auth.log": [
+          "06:40 conta=folha_operador origem=10.61.10.30 resultado=sucesso mfa=sim",
+          "06:58 conta=licitacoes_svc origem=10.61.10.44 destino=APP-PAG resultado=sucesso",
+          "07:07 conta=backup_svc origem=10.61.30.10 resultado=sucesso"
+        ],
+        "/politica.txt": "licitacoes_svc: permitida apenas em LIC-01, 08h-18h, sem permissão de editar lotes no APP-PAG. backup_svc: execução noturna autorizada."
+      }
+    },
+    "lic": {
+      "nome": "Estação LIC-01",
+      "ip": "10.61.10.44",
+      "tipo": "estacao",
+      "pos": [
+        0.31,
+        0.75
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "comprometido",
+      "arquivos": {
+        "/logs/edr.log": [
+          "06:40 processo=explorer.exe assinatura=valida",
+          "06:57 processo=cliente_integracao.exe assinatura=ausente usuario=licitacoes_svc",
+          "06:58 processo=cliente_integracao.exe destino=APP-PAG conta=licitacoes_svc evento=acesso_anomalo",
+          "07:00 processo=antivirus.exe assinatura=valida"
+        ]
+      }
+    },
+    "app": {
+      "nome": "APP-PAG",
+      "ip": "10.61.20.40",
+      "tipo": "servidor",
+      "pos": [
+        0.76,
+        0.25
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "alerta",
+      "arquivos": {
+        "/logs/auditoria.log": [
+          "06:45 lote=LOTE-440 operacao=consulta resultado=ok",
+          "07:01 lote=LOTE-441 operacao=alteracao_favorecido conta=licitacoes_svc origem=10.61.10.44 antes=cadastrado depois=divergente",
+          "07:03 lote=LOTE-441 operacao=envio resultado=retido_validacao",
+          "07:07 lote=LOTE-442 operacao=consulta resultado=ok"
+        ],
+        "/logs/dns.log": [
+          "07:01 dominio=portal.serraclara.example resultado=interno",
+          "07:04 dominio=consulta-convenios.example ip=203.0.113.45",
+          "07:05 dominio=portal.serraclara.example resultado=interno"
+        ]
+      }
+    },
+    "fw": {
+      "nome": "Firewall",
+      "ip": "10.61.0.1",
+      "tipo": "firewall",
+      "pos": [
+        0.77,
+        0.72
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/logs/fluxos.log": [
+          "06:52 src=10.61.9.8 dst=10.61.20.40 motivo=scanner_homologado",
+          "07:04 src=10.61.20.40 dst=203.0.113.45 porta=443 tipo=beacon_simulado",
+          "07:05 src=10.61.20.40 dst=203.0.113.45 porta=443 tipo=beacon_simulado",
+          "07:07 src=10.61.30.10 dst=10.61.20.40 tipo=backup"
+        ]
+      }
+    },
+    "cofre": {
+      "nome": "Cofre de auditoria",
+      "ip": "10.61.30.10",
+      "tipo": "backup",
+      "pos": [
+        0.94,
+        0.5
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/relatorios/lote.txt": "LOTE-441: pagamento retido antes da liquidação. A alteração de favorecido foi confirmada, mas não há registro de transferência concluída. Preservar trilha, histórico e aprovação por duas pessoas."
+      }
+    }
+  },
+  "links": [
+    [
+      "estacao",
+      "siem"
+    ],
+    [
+      "siem",
+      "ad"
+    ],
+    [
+      "ad",
+      "lic"
+    ],
+    [
+      "lic",
+      "app"
+    ],
+    [
+      "app",
+      "fw"
+    ],
+    [
+      "app",
+      "cofre"
+    ]
+  ],
+  "emails": [
+    {
+      "quando": "inicio",
+      "de": "Helena Prado <helena@aurora.example>",
+      "assunto": "Incidente em andamento",
+      "corpo": "{nome}, preserve a continuidade do serviço, cruze evidências independentes e não confunda suspeita com conclusão. Este exercício usa apenas dados fictícios."
+    }
+  ],
+  "objetivos": [
+    {
+      "id": "o1",
+      "tipo": "ler",
+      "host": "estacao",
+      "arquivo": "/chamado.txt",
+      "texto": "Leia a ocorrência e determine o que não pode parar",
+      "dica": "Conheça as operações autorizadas antes dos alertas.",
+      "revela": [
+        "siem",
+        "ad"
+      ]
+    },
+    {
+      "id": "o2",
+      "tipo": "resposta",
+      "chave": "ruido",
+      "valor": "10.61.9.8",
+      "texto": "Identifique o ruído de manutenção autorizado",
+      "dica": "Compare horário e origem em fontes distintas.",
+      "evidencias": [
+        "estacao:/chamado.txt",
+        "siem:/logs/alertas.log"
+      ],
+      "revela": [
+        "lic"
+      ]
+    },
+    {
+      "id": "o3",
+      "tipo": "resposta",
+      "chave": "conta",
+      "valor": "licitacoes_svc",
+      "texto": "Determine a conta usada fora da finalidade",
+      "dica": "Uma autenticação bem-sucedida também pode ser imprópria.",
+      "evidencias": [
+        "ad:/logs/auth.log",
+        "ad:/politica.txt"
+      ],
+      "revela": [
+        "app"
+      ],
+      "fichas": [
+        "T1078"
+      ]
+    },
+    {
+      "id": "o4",
+      "tipo": "resposta",
+      "chave": "origem",
+      "valor": "10.61.10.44",
+      "texto": "Confirme a origem da alteração indevida",
+      "dica": "Correlacione identidade, endpoint e auditoria do aplicativo.",
+      "evidencias": [
+        "ad:/logs/auth.log",
+        "lic:/logs/edr.log",
+        "app:/logs/auditoria.log"
+      ]
+    },
+    {
+      "id": "o5",
+      "tipo": "resposta",
+      "chave": "lote",
+      "valor": "LOTE-441",
+      "texto": "Localize o lote modificado",
+      "dica": "Diferencie consulta de alteração e confira o resultado.",
+      "evidencias": [
+        "siem:/logs/alertas.log",
+        "app:/logs/auditoria.log"
+      ],
+      "fichas": [
+        "T1565.001"
+      ],
+      "revela": [
+        "fw"
+      ]
+    },
+    {
+      "id": "o6",
+      "tipo": "resposta",
+      "chave": "destino",
+      "valor": "203.0.113.45",
+      "texto": "Corrobore a comunicação externa suspeita",
+      "dica": "DNS sugere resolução, firewall confirma conexão.",
+      "evidencias": [
+        "app:/logs/dns.log",
+        "fw:/logs/fluxos.log"
+      ],
+      "fichas": [
+        "T1071.001"
+      ],
+      "revela": [
+        "cofre"
+      ]
+    },
+    {
+      "id": "o7",
+      "tipo": "comando",
+      "comando": "bloquear",
+      "alvo": "203.0.113.45",
+      "texto": "Bloqueie o destino externo confirmado",
+      "dica": "Não bloqueie serviços internos."
+    },
+    {
+      "id": "o8",
+      "tipo": "comando",
+      "comando": "isolar",
+      "alvo": "lic",
+      "texto": "Isole a estação usada indevidamente",
+      "dica": "Não interrompa o aplicativo legítimo."
+    },
+    {
+      "id": "o9",
+      "tipo": "comando",
+      "comando": "desativar",
+      "alvo": "licitacoes_svc",
+      "texto": "Suspenda a conta abusada",
+      "dica": "Preserve contas de operação e backup.",
+      "estados": {
+        "app": "seguro"
+      }
+    },
+    {
+      "id": "o10",
+      "tipo": "ler",
+      "host": "cofre",
+      "arquivo": "/relatorios/lote.txt",
+      "texto": "Verifique se a transferência foi consumada",
+      "dica": "Uma alteração não prova dinheiro transferido."
+    }
+  ],
+  "fichas": {
+    "T1078": {
+      "nome": "Contas válidas",
+      "descricao": "Credenciais legítimas podem ser usadas indevidamente.",
+      "defesa": "MFA, menor privilégio e controles por horário.",
+      "url": "https://attack.mitre.org/techniques/T1078/"
+    },
+    "T1565.001": {
+      "nome": "Manipulação de dados armazenados",
+      "descricao": "Adversários podem alterar registros para gerar impacto.",
+      "defesa": "Trilha de auditoria imutável e dupla aprovação.",
+      "url": "https://attack.mitre.org/techniques/T1565/001/"
+    },
+    "T1071.001": {
+      "nome": "Comunicação web",
+      "descricao": "Tráfego web pode ser usado como canal suspeito.",
+      "defesa": "Correlacione DNS, firewall e telemetria.",
+      "url": "https://attack.mitre.org/techniques/T1071/001/"
+    }
+  },
+  "debrief": "O lote foi retido e a tentativa de fraude documentada. Ação indevida não equivale a pagamento consumado. A investigação protegeu o serviço e preservou a auditoria.",
+  "falha": "A janela acabou sem contenção suficiente. Reavalie as evidências e evite interromper sistemas essenciais."
+}
