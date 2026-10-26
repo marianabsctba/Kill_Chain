@@ -148,6 +148,7 @@ func _cat(args: PackedStringArray) -> void:
 	if not Game.is_file(path):
 		term.write("cat: arquivo não encontrado: %s" % path, UiTheme.DANGER)
 		return
+	Game.record_evidence(path)
 	for l in Game.read_file(path).split("\n"):
 		term.write(l)
 	Game.notify("cat", path)
@@ -277,6 +278,7 @@ func _answer(args: PackedStringArray) -> void:
 	match Game.answer(args[0], value):
 		1: term.write("resposta correta", UiTheme.OK)
 		0: term.write("resposta incorreta, revise as evidências", UiTheme.DANGER)
+		-2: term.write("conclusão sem evidências suficientes: consulte outras fontes do caso", UiTheme.WARN)
 		_: term.write("nenhuma pergunta aberta com a chave \"%s\"" % args[0], UiTheme.WARN)
 
 
@@ -296,7 +298,10 @@ func _decode(args: PackedStringArray) -> void:
 ## custa tempo nas missões com cronômetro.
 func _contain(command: String, arg: String, done_msg: String) -> void:
 	term.write(done_msg, UiTheme.OK)
-	if not Game.notify(command, arg) and Game.is_timed():
+	var correct := Game.notify(command, arg)
+	if not correct:
+		Game.record_bad_containment()
+	if not correct and Game.is_timed():
 		var penalty := float(Game.mission.get("penalidade", 30))
 		Game.penalize(penalty)
 		term.write("ação desnecessária: a equipe perdeu %d segundos" % int(penalty), UiTheme.DANGER)
