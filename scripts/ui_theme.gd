@@ -20,21 +20,25 @@ const ACCENTS := {
 
 static var accent: Color = ACCENTS["ciano"]
 static var _font: Font
+static var _bold: Font
 
 
 static func set_accent(name: String) -> void:
 	accent = ACCENTS.get(name, ACCENTS["ciano"])
 
 
+## Fonte embutida (JetBrains Mono, licença OFL em fonts/OFL.txt), porque a
+## versão web não tem acesso às fontes do sistema.
 static func mono_font() -> Font:
 	if _font == null:
-		var f := SystemFont.new()
-		f.font_names = PackedStringArray([
-			"JetBrains Mono", "Cascadia Mono", "Consolas",
-			"DejaVu Sans Mono", "Courier New", "monospace",
-		])
-		_font = f
+		_font = load("res://fonts/JetBrainsMono-Regular.ttf")
 	return _font
+
+
+static func bold_font() -> Font:
+	if _bold == null:
+		_bold = load("res://fonts/JetBrainsMono-Bold.ttf")
+	return _bold
 
 
 static func hex(c: Color) -> String:
@@ -80,8 +84,9 @@ static func build() -> Theme:
 	t.set_color("font_hover_pressed_color", "Button", Color.WHITE)
 
 	t.set_color("default_color", "RichTextLabel", TEXT)
-	for k in ["normal_font", "bold_font", "italics_font", "mono_font"]:
+	for k in ["normal_font", "italics_font", "mono_font"]:
 		t.set_font(k, "RichTextLabel", font)
+	t.set_font("bold_font", "RichTextLabel", bold_font())
 	t.set_stylebox("normal", "RichTextLabel", StyleBoxEmpty.new())
 
 	t.set_stylebox("panel", "TabContainer", box(PANEL, PANEL_BORDER))

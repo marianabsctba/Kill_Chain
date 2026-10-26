@@ -101,8 +101,8 @@ func _draw() -> void:
 			draw_arc(p, r, 0, TAU, 48, Color(col, 0.8), 1.5, true)
 		if id == _hovered:
 			draw_arc(p, RADIUS + 4.0, 0, TAU, 40, Color.WHITE, 1.0, true)
-		draw_string(font, p + Vector2(-90, RADIUS + 20), str(h.get("nome", id)), HORIZONTAL_ALIGNMENT_CENTER, 180, 15, UiTheme.TEXT)
-		draw_string(font, p + Vector2(-90, RADIUS + 38), str(h.get("ip", "")), HORIZONTAL_ALIGNMENT_CENTER, 180, 13, UiTheme.DIM)
+		draw_string(font, p + Vector2(-130, RADIUS + 20), str(h.get("nome", id)), HORIZONTAL_ALIGNMENT_CENTER, 260, 15, UiTheme.TEXT)
+		draw_string(font, p + Vector2(-130, RADIUS + 38), str(h.get("ip", "")), HORIZONTAL_ALIGNMENT_CENTER, 260, 13, UiTheme.DIM)
 
 
 func _gui_input(event: InputEvent) -> void:
