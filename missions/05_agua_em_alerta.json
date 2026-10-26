@@ -1,0 +1,350 @@
+{
+  "id": "05_agua_em_alerta",
+  "requer": "04_folha_fantasma",
+  "dificuldade": 5,
+  "titulo": "[05] Água em Alerta",
+  "resumo": "Saneamento no sertão pernambucano: TI comprometida e anomalia operacional sem causalidade comprovada.",
+  "intro": "04h20. Cooperativa fictícia Águas do Sertão, Pernambuco. Um operador relata pressão anômala em um reservatório. Há suspeita de acesso indevido à rede de supervisão, mas nenhum comando a controladores está confirmado.",
+  "inicio": "estacao",
+  "tempo": 1800,
+  "tempo_rotulo": "janela crítica",
+  "penalidade": 90,
+  "hosts": {
+    "estacao": {
+      "nome": "CSIRT",
+      "ip": "10.72.0.21",
+      "tipo": "estacao",
+      "pos": [
+        0.06,
+        0.5
+      ],
+      "oculto": false,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/chamado.txt": "CH-5120: ADM-04 com alerta de segurança. SENSOR-02 detectou oscilação de pressão. Scanner autorizado 10.72.9.9 operou das 04h às 05h. Não desligue CLP, SCADA, gateway OT ou fornecimento.",
+        "/escopo.txt": "Apenas estação ADM-04, conta suporte_terceiro e IP externo confirmado podem ser contidos. Toda decisão operacional depende da engenharia industrial."
+      }
+    },
+    "siem": {
+      "nome": "SIEM regional",
+      "ip": "10.72.0.30",
+      "tipo": "servidor",
+      "pos": [
+        0.26,
+        0.2
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/logs/alertas.log": [
+          "04:02 alerta=scan src=10.72.9.9 autorizado=sim",
+          "04:11 alerta=acesso_fora_janela conta=suporte_terceiro origem=10.72.10.44 destino=JMP-OT",
+          "04:13 alerta=execucao processo=powershell.exe host=ADM-04",
+          "04:15 alerta=destino_raro host=ADM-04",
+          "04:21 alerta=pressao_baixa sensor=SENSOR-02",
+          "04:25 alerta=scan src=10.72.9.9 autorizado=sim"
+        ]
+      }
+    },
+    "ad": {
+      "nome": "Identidade",
+      "ip": "10.72.0.10",
+      "tipo": "dc",
+      "pos": [
+        0.5,
+        0.2
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/logs/auth.log": [
+          "03:55 conta=engenharia_ot destino=JMP-OT autorizacao=sim",
+          "04:11 conta=suporte_terceiro origem=10.72.10.44 destino=JMP-OT resultado=sucesso",
+          "04:12 conta=suporte_terceiro origem=10.72.10.44 destino=JMP-OT resultado=sucesso"
+        ],
+        "/politica.txt": "suporte_terceiro permitido apenas 09h-17h com chamado aprovado. Nenhum chamado autorizado nesta madrugada. engenharia_ot tem escala operacional aprovada."
+      }
+    },
+    "adm": {
+      "nome": "ADM-04",
+      "ip": "10.72.10.44",
+      "tipo": "estacao",
+      "pos": [
+        0.3,
+        0.76
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "comprometido",
+      "arquivos": {
+        "/logs/edr.log": [
+          "04:01 processo=explorer.exe assinatura=valida",
+          "04:10 processo=cliente_suporte.exe conta=suporte_terceiro assinatura=ausente",
+          "04:13 processo=powershell.exe pai=cliente_suporte.exe evento=suspeito sem_codigo_real",
+          "04:15 processo=cliente_suporte.exe destino=203.0.113.92 tipo=beacon_simulado",
+          "04:22 processo=antivirus.exe status=normal"
+        ],
+        "/logs/dns.log": [
+          "04:05 dominio=portal.aguas-sertão.example origem=interno",
+          "04:15 dominio=atualizacao-telemetria.example ip=203.0.113.92"
+        ]
+      }
+    },
+    "fw": {
+      "nome": "Firewall de segregação",
+      "ip": "10.72.0.1",
+      "tipo": "firewall",
+      "pos": [
+        0.73,
+        0.75
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/logs/fluxos.log": [
+          "04:11 origem=10.72.10.44 destino=10.72.20.20 tipo=login",
+          "04:15 origem=10.72.10.44 destino=203.0.113.92 porta=443 resultado=permitido",
+          "04:16 origem=10.72.10.44 destino=203.0.113.92 porta=443 resultado=permitido",
+          "04:18 origem=10.72.9.9 destino=10.72.20.20 tipo=scanner_autorizado"
+        ]
+      }
+    },
+    "jump": {
+      "nome": "Gateway JMP-OT",
+      "ip": "10.72.20.20",
+      "tipo": "servidor",
+      "pos": [
+        0.75,
+        0.25
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "alerta",
+      "arquivos": {
+        "/logs/sessoes.log": [
+          "03:55 conta=engenharia_ot tipo=acesso_autorizado",
+          "04:11 conta=suporte_terceiro origem=10.72.10.44 autorizacao=ausente",
+          "04:14 conta=suporte_terceiro acao=consulta_painel comando_industrial=nao",
+          "04:19 conta=engenharia_ot tipo=acesso_autorizado"
+        ],
+        "/politica.txt": "Somente registros simulados. Consulta de painel não comprova alteração em CLP. Não executar comandos industriais."
+      }
+    },
+    "hist": {
+      "nome": "Historiador OT",
+      "ip": "10.72.20.60",
+      "tipo": "servidor",
+      "pos": [
+        0.94,
+        0.48
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "seguro",
+      "arquivos": {
+        "/logs/pressao.log": [
+          "04:05 sensor=SENSOR-02 pressao=3.2",
+          "04:10 sensor=SENSOR-02 pressao=3.1",
+          "04:20 sensor=SENSOR-02 pressao=2.7 alerta=sim",
+          "04:22 sensor=SENSOR-02 pressao=2.8 alerta=sim",
+          "04:29 sensor=SENSOR-02 pressao=3.1 normal=sim"
+        ],
+        "/relatorios/engenharia.txt": "Causa confirmada: oscilacao_hidraulica em ajuste automático autorizado. Nenhuma evidência de alteração em CLP, lógica industrial ou comando malicioso. O incidente cibernético restringiu-se à estação administrativa e identidade de terceiro."
+      }
+    }
+  },
+  "links": [
+    [
+      "estacao",
+      "siem"
+    ],
+    [
+      "siem",
+      "ad"
+    ],
+    [
+      "ad",
+      "adm"
+    ],
+    [
+      "adm",
+      "fw"
+    ],
+    [
+      "fw",
+      "jump"
+    ],
+    [
+      "jump",
+      "hist"
+    ]
+  ],
+  "emails": [
+    {
+      "quando": "inicio",
+      "de": "Helena Prado <helena@aurora.example>",
+      "assunto": "Incidente em andamento",
+      "corpo": "{nome}, preserve a continuidade do serviço, cruze evidências independentes e não confunda suspeita com conclusão. Este exercício usa apenas dados fictícios."
+    }
+  ],
+  "objetivos": [
+    {
+      "id": "o1",
+      "tipo": "ler",
+      "host": "estacao",
+      "arquivo": "/chamado.txt",
+      "texto": "Leia o escopo e identifique sistemas que não podem ser interrompidos",
+      "dica": "Operação industrial tem prioridade de segurança física.",
+      "revela": [
+        "siem",
+        "ad"
+      ]
+    },
+    {
+      "id": "o2",
+      "tipo": "resposta",
+      "chave": "scanner",
+      "valor": "10.72.9.9",
+      "texto": "Identifique o falso positivo autorizado",
+      "dica": "Correlacione o inventário de janela com o SIEM.",
+      "evidencias": [
+        "estacao:/chamado.txt",
+        "siem:/logs/alertas.log"
+      ],
+      "revela": [
+        "adm"
+      ]
+    },
+    {
+      "id": "o3",
+      "tipo": "resposta",
+      "chave": "conta",
+      "valor": "suporte_terceiro",
+      "texto": "Localize o acesso de terceiro fora da janela",
+      "dica": "Compare autenticação e política de autorização.",
+      "evidencias": [
+        "ad:/logs/auth.log",
+        "ad:/politica.txt"
+      ],
+      "revela": [
+        "jump"
+      ],
+      "fichas": [
+        "T1078"
+      ]
+    },
+    {
+      "id": "o4",
+      "tipo": "resposta",
+      "chave": "processo",
+      "valor": "powershell.exe",
+      "texto": "Identifique a execução suspeita na origem",
+      "dica": "Relacione o processo pai ao alerta do SIEM.",
+      "evidencias": [
+        "adm:/logs/edr.log",
+        "siem:/logs/alertas.log"
+      ],
+      "fichas": [
+        "T1059.001"
+      ],
+      "revela": [
+        "fw"
+      ]
+    },
+    {
+      "id": "o5",
+      "tipo": "resposta",
+      "chave": "ip",
+      "valor": "203.0.113.92",
+      "texto": "Corrobore a conexão externa",
+      "dica": "Compare DNS na estação com fluxo no firewall.",
+      "evidencias": [
+        "adm:/logs/dns.log",
+        "fw:/logs/fluxos.log"
+      ],
+      "fichas": [
+        "T1071.001"
+      ]
+    },
+    {
+      "id": "o6",
+      "tipo": "resposta",
+      "chave": "acao_ot",
+      "valor": "consulta_painel",
+      "texto": "Determine a ação realizada no gateway OT",
+      "dica": "Consultar uma tela não equivale a alterar o processo.",
+      "evidencias": [
+        "jump:/logs/sessoes.log",
+        "jump:/politica.txt"
+      ],
+      "revela": [
+        "hist"
+      ]
+    },
+    {
+      "id": "o7",
+      "tipo": "resposta",
+      "chave": "causa",
+      "valor": "oscilacao_hidraulica",
+      "texto": "Diferencie falha hidráulica de intervenção cibernética",
+      "dica": "Use série temporal e validação pela engenharia.",
+      "evidencias": [
+        "hist:/logs/pressao.log",
+        "hist:/relatorios/engenharia.txt"
+      ]
+    },
+    {
+      "id": "o8",
+      "tipo": "comando",
+      "comando": "bloquear",
+      "alvo": "203.0.113.92",
+      "texto": "Bloqueie o destino externo confirmado",
+      "dica": "Preserve endereços internos da operação."
+    },
+    {
+      "id": "o9",
+      "tipo": "comando",
+      "comando": "isolar",
+      "alvo": "adm",
+      "texto": "Isole a estação administrativa comprometida",
+      "dica": "Não isole hosts industriais."
+    },
+    {
+      "id": "o10",
+      "tipo": "comando",
+      "comando": "desativar",
+      "alvo": "suporte_terceiro",
+      "texto": "Revogue a conta de terceiro comprometida",
+      "dica": "Proteja as contas essenciais da engenharia.",
+      "estados": {
+        "jump": "seguro"
+      }
+    }
+  ],
+  "fichas": {
+    "T1078": {
+      "nome": "Contas válidas",
+      "descricao": "Credenciais existentes podem ser usadas fora do escopo.",
+      "defesa": "Acesso just-in-time, MFA e aprovação de sessões.",
+      "url": "https://attack.mitre.org/techniques/T1078/"
+    },
+    "T1059.001": {
+      "nome": "PowerShell",
+      "descricao": "Interpretadores podem ser abusados durante acesso indevido.",
+      "defesa": "Correlacione árvore de processos e autenticação.",
+      "url": "https://attack.mitre.org/techniques/T1059/001/"
+    },
+    "T1071.001": {
+      "nome": "Protocolo de aplicação: web",
+      "descricao": "Canais web podem carregar comunicações suspeitas.",
+      "defesa": "DNS, firewall e EDR devem confirmar o tráfego.",
+      "url": "https://attack.mitre.org/techniques/T1071/001/"
+    }
+  },
+  "debrief": "A estação e a identidade comprometidas foram contidas sem interromper o tratamento de água. A oscilação hidráulica era independente do incidente digital. Causalidade precisa de evidência, não de coincidência.",
+  "falha": "A janela acabou sem contenção suficiente. Reavalie as evidências e evite interromper sistemas essenciais."
+}
