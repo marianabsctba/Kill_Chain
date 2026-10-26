@@ -123,7 +123,9 @@ func load_progress() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(PROGRESS_PATH) != OK:
 		return
-	for id in cfg.get_section_keys("concluidas") if cfg.has_section("concluidas") else []:
+	if not cfg.has_section("concluidas"):
+		return
+	for id in cfg.get_section_keys("concluidas"):
 		if cfg.get_value("concluidas", id, false):
 			completed_missions[id] = true
 
