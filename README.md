@@ -61,3 +61,13 @@ A pontuação vai de 0 a 1.000: 600 pontos por fechar os objetivos, até 200 por
 Missões avançadas podem definir `evidencias` em objetivos do tipo `resposta`: uma lista de `host_id:/caminho` que precisa ser consultada com `cat` antes de aceitar a resposta. Isso exige correlação entre fontes, sem dar a solução na dica. `grep` serve para localizar indícios; abra com `cat` os registros escolhidos para sustentar sua conclusão.
 
 A progressão planejada é gradual: treinamento guiado, incidente com cronômetro, investigação de infraestrutura inteiramente simulada, e caso complexo com falsos positivos e necessidade de confirmação cruzada. Nunca conecte o jogo a infraestrutura real de terceiros.
+
+### Teste completo da campanha
+
+Para validar todos os casos e a progressão sequencial no Godot 4.7:
+
+```bash
+godot --headless --path . res://tests/campanha.tscn
+```
+
+O teste percorre objetivos, verifica se os hosts já foram revelados, confere caminhos de evidências e fichas, valida as regras de desbloqueio e registra a pontuação. O script de teste usa o perfil de execução local do Godot e pode atualizar `user://progresso.cfg`; execute preferencialmente com um ambiente de teste separado. Além do teste automatizado, faça uma passagem manual para avaliar clareza, tempo e equilíbrio do caso.
