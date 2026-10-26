@@ -159,6 +159,8 @@ func _show_boot() -> void:
 	label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	label.offset_left = 48
 	label.offset_top = 40
+	# Deixa o clique passar para _unhandled_input e avançar a abertura.
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(label)
 
 	var ok := "[color=%s][lb] ok [rb][/color] " % UiTheme.hex(UiTheme.OK)
