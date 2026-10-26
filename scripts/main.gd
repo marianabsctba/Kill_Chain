@@ -261,7 +261,13 @@ func _show_menu() -> void:
 		_label(box, "nenhuma missão encontrada em %s" % Game.MISSIONS_DIR, UiTheme.WARN)
 	for m in missions:
 		var b := Button.new()
-		b.text = "%s\n%s" % [m.get("titulo", m.get("id", "?")), Game.fmt(m.get("resumo", ""))]
+		var unlocked := Game.is_mission_unlocked(m)
+		var cleared := Game.completed_missions.has(str(m.get("id", "")))
+		var status := " [CONCLUÍDO]" if cleared else (" [BLOQUEADO]" if not unlocked else "")
+		b.text = "%s%s\n%s" % [m.get("titulo", m.get("id", "?")), status, Game.fmt(m.get("resumo", ""))]
+		b.disabled = not unlocked
+		if not unlocked:
+			b.tooltip_text = "Conclua o caso anterior para liberar esta missão."
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		b.pressed.connect(_start_mission.bind(m))
@@ -278,6 +284,8 @@ func _show_menu() -> void:
 # Tela 4: mesa de trabalho
 
 func _start_mission(m: Dictionary) -> void:
+	if not Game.is_mission_unlocked(m):
+		return
 	_build_desk()
 	_mission_label.text = str(m.get("titulo", ""))
 	if m.has("intro"):
