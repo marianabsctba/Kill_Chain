@@ -25,6 +25,7 @@ Os casos se desbloqueiam em sequência. Cada técnica que você identifica vira 
 | **[03] Turno Cego** | cooperativa de saúde | nem todo alerta é o que parece |
 | **[04] Folha Fantasma** | prefeitura no interior de Minas | fraude em pagamentos e identidade abusada |
 | **[05] Água em Alerta** | saneamento no sertão pernambucano | TI e operação: separar fato de suspeita |
+| **[06] A Virada do PIX** | fintech em São Paulo | conter sem derrubar o que precisa continuar de pé |
 
 Sem spoilers aqui: as técnicas de cada caso só aparecem quando você as descobre.
 
