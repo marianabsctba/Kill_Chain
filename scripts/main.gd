@@ -264,6 +264,9 @@ func _show_menu() -> void:
 		var unlocked := Game.is_mission_unlocked(m)
 		var cleared := Game.completed_missions.has(str(m.get("id", "")))
 		var status := " [CONCLUÍDO]" if cleared else (" [BLOQUEADO]" if not unlocked else "")
+		var record := int(Game.best_scores.get(str(m.get("id", "")), 0))
+		if cleared:
+			status += " | RECORD: %d (%s)" % [record, Game.score_rank(record)]
 		b.text = "%s%s\n%s" % [m.get("titulo", m.get("id", "?")), status, Game.fmt(m.get("resumo", ""))]
 		b.disabled = not unlocked
 		if not unlocked:
@@ -484,6 +487,9 @@ func _on_mission_finished() -> void:
 	_root.add_child(overlay)
 	var box := _center_panel(720)
 	_label(box, "CASO ENCERRADO", UiTheme.OK, 26)
+	_label(box, "DESEMPENHO: %d / 1000 | CLASSIFICAÇÃO %s" % [Game.score_result, Game.score_rank(Game.score_result)], UiTheme.accent, 20)
+	_label(box, "Fontes examinadas: %d | Respostas erradas: %d | Contenções indevidas: %d" % [Game.evidence_seen.size(), Game.wrong_answers, Game.wrong_containment], UiTheme.DIM, 14)
+	_label(box, "Recorde desta missão: %d" % int(Game.best_scores.get(str(Game.mission.get("id", "")), 0)), UiTheme.DIM, 14)
 	_label(box, Game.fmt(Game.mission.get("debrief", "")))
 	if not Game.unlocked_cards.is_empty():
 		_label(box, "fichas conquistadas", UiTheme.DIM, 14)
