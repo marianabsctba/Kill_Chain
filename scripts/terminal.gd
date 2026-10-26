@@ -39,6 +39,9 @@ func _ready() -> void:
 	input.placeholder_text = "digite help"
 	input.context_menu_enabled = false
 	input.caret_blink = true
+	# Desde a Godot 4.4 o LineEdit sai do modo de edição ao apertar Enter;
+	# no terminal queremos continuar digitando o próximo comando.
+	input.keep_editing_on_text_submit = true
 	input.text_submitted.connect(_on_submit)
 	input.gui_input.connect(_on_input_gui)
 	row.add_child(input)
@@ -61,6 +64,7 @@ func refresh_colors() -> void:
 
 func focus() -> void:
 	input.grab_focus()
+	input.edit()
 
 
 func set_prompt(text: String) -> void:
@@ -93,6 +97,7 @@ static func esc(s: String) -> String:
 
 func _on_submit(line: String) -> void:
 	input.clear()
+	focus.call_deferred()
 	var trimmed := line.strip_edges()
 	write_bb("[color=%s]%s[/color]%s" % [UiTheme.hex(UiTheme.accent), esc(prompt_label.text), esc(trimmed)])
 	if trimmed.is_empty():
