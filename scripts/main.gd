@@ -172,8 +172,9 @@ func _show_boot() -> void:
 		ok + "abrindo canal seguro com a coordenação",
 		"",
 		"[color=%s]  ╔════════════════════════════════════╗[/color]" % UiTheme.hex(UiTheme.accent),
-		"[color=%s]  ║      K I L L  / /  C H A I N       ║[/color]" % UiTheme.hex(UiTheme.accent),
+		"[color=%s]  ║        K I L L   C H A I N         ║[/color]" % UiTheme.hex(UiTheme.accent),
 		"[color=%s]  ╚════════════════════════════════════╝[/color]" % UiTheme.hex(UiTheme.accent),
+		"[color=%s]          Powered by Mariana BS[/color]" % UiTheme.hex(UiTheme.DIM),
 		"",
 		"[color=%s]pressione ENTER para continuar[/color]" % UiTheme.hex(UiTheme.WARN),
 	]
