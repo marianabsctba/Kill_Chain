@@ -20,17 +20,29 @@ func _ready() -> void:
 		for obj in m.get("objetivos", []):
 			var objective_id := str(obj.get("id", ""))
 			for entry in obj.get("evidencias", []):
-				var bits := str(entry).split(":", false, 1)
-				_assert(bits.size() == 2, "Formato de evidência: " + str(entry))
-				if bits.size() != 2:
+				var ref := str(entry)
+				var first_colon := ref.find(":")
+				_assert(first_colon > 0, "Formato de evidência: " + ref)
+				if first_colon < 0:
 					continue
-				var host := bits[0]
-				var path := bits[1]
-				_assert(Game.revealed.has(host), "Host revelado em " + id + "/" + objective_id + ": " + host)
-				_assert(Game.host(host).get("arquivos", {}).has(path), "Arquivo existente: " + str(entry))
-				if Game.revealed.has(host):
-					Game.connect_to(host)
-					Game.record_evidence(path)
+				var first := ref.substr(0, first_colon)
+				var rest := ref.substr(first_colon + 1)
+				if Game.hosts().has(first):
+					_assert(Game.revealed.has(first), "Host revelado: " + first)
+					_assert(Game.host(first).get("arquivos", {}).has(rest), "Arquivo existente: " + ref)
+					if Game.revealed.has(first):
+						Game.connect_to(first)
+						Game.record_evidence(rest)
+				else:
+					var archived := Game.mission_by_id(first)
+					var colon := rest.find(":")
+					_assert(not archived.is_empty() and colon > 0, "Referência de arquivo válida: " + ref)
+					if colon > 0:
+						var source_host := rest.substr(0, colon)
+						var source_path := rest.substr(colon + 1)
+						_assert(Game.completed_missions.has(first), "Caso arquivado concluído: " + first)
+						_assert(archived.get("hosts", {}).get(source_host, {}).get("arquivos", {}).has(source_path), "Prova arquivada existente: " + ref)
+						Game.record_evidence_key(ref)
 			var kind := str(obj.get("tipo", ""))
 			var ok := false
 			match kind:
@@ -49,6 +61,15 @@ func _ready() -> void:
 				"comando":
 					var command := str(obj.get("comando", ""))
 					var target := str(obj.get("alvo", ""))
+					if command == "arquivo":
+						var colon := target.find(":")
+						var mission_id := target.substr(0, colon)
+						var host_ref := target.substr(colon + 1)
+						var archived := Game.mission_by_id(mission_id)
+						var part := host_ref.find(":")
+						if part >= 0:
+							_assert(archived.get("hosts", {}).get(host_ref.substr(0, part), {}).get("arquivos", {}).has(host_ref.substr(part + 1)), "Arquivo do caso anterior existe: " + target)
+						Game.record_evidence_key(target)
 					if command == "connect":
 						_assert(Game.revealed.has(target), "Alvo revelado para conexão: " + target)
 						_assert(not Game.host(target).get("externo", false) or Game.host(target).get("simulado", false), "Acesso externo somente simulado: " + target)
