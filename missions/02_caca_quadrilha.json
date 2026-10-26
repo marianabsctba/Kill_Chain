@@ -191,5 +191,6 @@
     }
   },
   "debrief": "Dossiê concluído, {nome}. Você correlacionou a campanha MAROLA, os indicadores simulados e uma segunda organização mencionada. A menção não demonstra que a outra organização foi comprometida. O CSIRT pode preservar o material fictício como relatório de treinamento, sem invasão real ou atribuição pessoal.",
-  "falha": "Não há cronômetro nesta missão."
+  "falha": "Não há cronômetro nesta missão.",
+  "requer": "01_hospital"
 }
