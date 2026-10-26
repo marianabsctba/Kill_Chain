@@ -1,0 +1,361 @@
+{
+  "id": "01_hospital",
+  "titulo": "[01] Plantão no Santa Clara",
+  "resumo": "Recife, sexta à noite. Contenha um ataque antes que alcance os prontuários.",
+  "intro": "21h47, sexta-feira. A recepção do Hospital Santa Clara travou por alguns segundos. O suporte chamou o CSIRT Aurora. Há indícios de atividade maliciosa e a equipe assistencial precisa continuar trabalhando. {nome}, comece pela mensagem da coordenação. Os sistemas e personagens deste caso são fictícios.",
+  "inicio": "estacao",
+  "tempo": 900,
+  "tempo_rotulo": "risco crítico em",
+  "penalidade": 45,
+  "hosts": {
+    "estacao": {
+      "nome": "Estação CSIRT",
+      "ip": "10.10.0.21",
+      "tipo": "estacao",
+      "pos": [
+        0.08,
+        0.49
+      ],
+      "oculto": false,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/notas/plantao.txt": "Chamado HSC-2510: recepção relata arquivo estranho aberto às 21:31. Ambiente assistencial em funcionamento. Preserve evidências e priorize contenção antes de qualquer recuperação."
+      }
+    },
+    "recepcao": {
+      "nome": "Recepção REC-07",
+      "ip": "10.20.10.27",
+      "tipo": "estacao",
+      "pos": [
+        0.39,
+        0.28
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "comprometido",
+      "arquivos": {
+        "/logs/correio.log": [
+          "21:12 entregue remetente=agenda@consultas.example destinatario=recepcao@santaclara.example assunto=Atualizacao de agenda anexo=agenda_outubro.html",
+          "21:15 entregue remetente=lab@santaclara.example destinatario=recepcao@santaclara.example assunto=Resultado anexo=resultado.pdf",
+          "21:29 entregue remetente=agenda@consultas.example destinatario=recepcao@santaclara.example assunto=Reenvio anexo=agenda_outubro.html",
+          "21:31 aberto usuario=recepcao arquivo=agenda_outubro.html origem=email",
+          "21:35 entregue remetente=suporte@santaclara.example assunto=Manutencao"
+        ],
+        "/logs/processos.log": [
+          "21:20 processo=explorer.exe usuario=recepcao status=normal",
+          "21:31 processo=msedge.exe usuario=recepcao arquivo=agenda_outubro.html",
+          "21:31 processo=powershell.exe usuario=recepcao pai=msedge.exe evento=execucao_suspeita marcador=SIM-EXEC-41 sem_codigo_real",
+          "21:32 processo=notepad.exe usuario=recepcao status=normal",
+          "21:34 processo=svchost.exe usuario=SYSTEM status=normal"
+        ],
+        "/logs/persistencia.log": [
+          "21:10 tarefa=AtualizacaoAntivirus proprietario=SYSTEM status=legitima",
+          "21:33 tarefa=SC_AgendaSync proprietario=recepcao acao=reiniciar_simulacao_suspeita status=criada",
+          "21:36 tarefa=RotinaBackup proprietario=backup_svc status=legitima"
+        ],
+        "/logs/rede.log": [
+          "21:18 src=10.20.10.27 dst=10.20.0.10 porta=53 resultado=permitido",
+          "21:34 src=10.20.10.27 dst=203.0.113.66 porta=443 dominio=central-atendimento.example evento=beacon_simulado",
+          "21:35 src=10.20.10.27 dst=10.20.0.10 porta=53 resultado=permitido",
+          "21:38 src=10.20.10.27 dst=203.0.113.66 porta=443 dominio=central-atendimento.example evento=beacon_simulado"
+        ],
+        "/logs/autenticacao.log": [
+          "21:21 conta=recepcao host=REC-07 tipo=interativo resultado=sucesso",
+          "21:39 conta=svc_agenda host=REC-07 tipo=rede resultado=sucesso origem=10.20.10.27 indicador=credencial_exposta",
+          "21:40 conta=svc_backup host=BK-01 tipo=servico resultado=sucesso",
+          "21:42 conta=svc_agenda host=ARQ-01 tipo=rede resultado=sucesso origem=10.20.10.27 indicador=uso_indevido"
+        ],
+        "/notas/aviso.txt": "ATENÇÃO: eventos classificados como simulados são somente descrições, não comandos executáveis."
+      }
+    },
+    "firewall": {
+      "nome": "Firewall interno",
+      "ip": "10.20.0.1",
+      "tipo": "firewall",
+      "pos": [
+        0.39,
+        0.7
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "alerta",
+      "arquivos": {
+        "/logs/saida.log": [
+          "21:18 origem=10.20.10.27 destino=10.20.0.10 acao=permitir",
+          "21:34 origem=10.20.10.27 destino=203.0.113.66 dominio=central-atendimento.example acao=permitir alerta=C2_suspeito",
+          "21:38 origem=10.20.10.27 destino=203.0.113.66 dominio=central-atendimento.example acao=permitir alerta=C2_suspeito",
+          "21:41 origem=10.20.10.27 destino=198.51.100.42 acao=negar regra=padrao"
+        ]
+      }
+    },
+    "arquivo": {
+      "nome": "Servidor de arquivos clínicos",
+      "ip": "10.20.20.10",
+      "tipo": "servidor",
+      "pos": [
+        0.74,
+        0.3
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "alerta",
+      "arquivos": {
+        "/logs/acesso.log": [
+          "21:20 conta=medicos_app recurso=prontuarios resultado=permitido",
+          "21:42 conta=svc_agenda origem=10.20.10.27 recurso=agendas resultado=permitido",
+          "21:43 conta=svc_agenda origem=10.20.10.27 recurso=prontuarios resultado=negado",
+          "21:45 conta=medicos_app recurso=prontuarios resultado=permitido"
+        ]
+      }
+    },
+    "backup": {
+      "nome": "Backup hospitalar",
+      "ip": "10.20.30.10",
+      "tipo": "backup",
+      "pos": [
+        0.78,
+        0.73
+      ],
+      "oculto": true,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/logs/backup.log": [
+          "20:00 job=backup_clinico resultado=sucesso",
+          "21:00 job=verificacao_integridade resultado=sucesso",
+          "21:40 job=backup_agendas resultado=sucesso"
+        ],
+        "/notas/recuperacao.txt": "Snapshots verificados. Recuperar somente após revogar credenciais, verificar persistência e revalidar a estação."
+      }
+    },
+    "c2": {
+      "nome": "Indicador externo C2",
+      "ip": "203.0.113.66",
+      "tipo": "servidor",
+      "pos": [
+        0.93,
+        0.5
+      ],
+      "oculto": true,
+      "externo": true,
+      "estado": "alerta",
+      "arquivos": {}
+    }
+  },
+  "links": [
+    [
+      "estacao",
+      "recepcao"
+    ],
+    [
+      "recepcao",
+      "firewall"
+    ],
+    [
+      "firewall",
+      "c2"
+    ],
+    [
+      "recepcao",
+      "arquivo"
+    ],
+    [
+      "arquivo",
+      "backup"
+    ]
+  ],
+  "emails": [
+    {
+      "quando": "inicio",
+      "de": "Helena Prado <helena@aurora.example>",
+      "assunto": "URGENTE: plantão no Santa Clara",
+      "corpo": "{nome}, o hospital precisa de ajuda. Leia o chamado na sua estação, confirme a origem do incidente e preserve a operação assistencial. A recepção REC-07 está sob suspeita. O hospital não pode ficar sem atendimento."
+    },
+    {
+      "quando": "o4",
+      "de": "Davi Costa <davi@santaclara.example>",
+      "assunto": "Firewall confirmou saída incomum",
+      "corpo": "Os alertas de saída estão no firewall interno. A equipe assistencial confirmou que o computador suspeito não deve acessar prontuários. Não bloqueie serviços internos essenciais por engano."
+    },
+    {
+      "quando": "o7",
+      "de": "Helena Prado <helena@aurora.example>",
+      "assunto": "Prioridade de contenção",
+      "corpo": "Boa investigação. Contenha a estação afetada e revogue a conta usada indevidamente. Depois, mantenha o hospital em operação e prepare a resposta."
+    }
+  ],
+  "objetivos": [
+    {
+      "id": "o1",
+      "texto": "Leia o chamado do plantão na estação CSIRT",
+      "dica": "Procure a pasta de notas com ls e abra o registro inicial com cat.",
+      "tipo": "ler",
+      "host": "estacao",
+      "arquivo": "/notas/plantao.txt",
+      "revela": [
+        "recepcao"
+      ]
+    },
+    {
+      "id": "o2",
+      "texto": "Acesse a estação suspeita da recepção",
+      "dica": "A estação liberada no mapa é o primeiro ponto de coleta de evidências.",
+      "tipo": "comando",
+      "comando": "connect",
+      "alvo": "recepcao"
+    },
+    {
+      "id": "o3",
+      "texto": "Identifique o anexo que iniciou a sequência suspeita",
+      "dica": "Compare os horários de abertura no correio com o início da atividade de processos.",
+      "tipo": "resposta",
+      "chave": "anexo",
+      "valor": "agenda_outubro.html",
+      "fichas": [
+        "T1566.001",
+        "T1204.002"
+      ]
+    },
+    {
+      "id": "o4",
+      "texto": "Identifique o processo iniciado de modo anormal",
+      "dica": "Veja as relações de processo pai e filho. Um navegador iniciando um interpretador de comandos merece análise.",
+      "tipo": "resposta",
+      "chave": "processo",
+      "valor": "powershell.exe",
+      "fichas": [
+        "T1059.001"
+      ],
+      "revela": [
+        "firewall",
+        "arquivo"
+      ]
+    },
+    {
+      "id": "o5",
+      "texto": "Identifique a tarefa de persistência suspeita",
+      "dica": "Compare proprietários, datas e ações registradas no log de tarefas.",
+      "tipo": "resposta",
+      "chave": "tarefa",
+      "valor": "SC_AgendaSync",
+      "fichas": [
+        "T1053.005"
+      ]
+    },
+    {
+      "id": "o6",
+      "texto": "Identifique o IP externo associado à comunicação suspeita",
+      "dica": "Cruze logs de rede da estação com os alertas do firewall. Um destino externo recorrente indica possível comando e controle.",
+      "tipo": "resposta",
+      "chave": "ip",
+      "valor": "203.0.113.66",
+      "fichas": [
+        "T1071.001"
+      ],
+      "revela": [
+        "c2"
+      ]
+    },
+    {
+      "id": "o7",
+      "texto": "Identifique a conta utilizada indevidamente",
+      "dica": "Verifique autenticações recentes e compare o acesso a recursos com as funções esperadas da conta.",
+      "tipo": "resposta",
+      "chave": "conta",
+      "valor": "svc_agenda",
+      "fichas": [
+        "T1078"
+      ],
+      "estados": {
+        "arquivo": "comprometido"
+      }
+    },
+    {
+      "id": "o8",
+      "texto": "Bloqueie o destino externo malicioso",
+      "dica": "Use bloquear apenas para o IP externo confirmado nos logs, não para endereços de serviços clínicos.",
+      "tipo": "comando",
+      "comando": "bloquear",
+      "alvo": "203.0.113.66",
+      "estados": {
+        "c2": "isolado"
+      }
+    },
+    {
+      "id": "o9",
+      "texto": "Isole a estação comprometida",
+      "dica": "O EDR permite tirar da rede somente o equipamento identificado sem desligar o hospital.",
+      "tipo": "comando",
+      "comando": "isolar",
+      "alvo": "recepcao",
+      "estados": {
+        "recepcao": "isolado",
+        "arquivo": "seguro"
+      },
+      "fichas": [
+        "T1486"
+      ]
+    },
+    {
+      "id": "o10",
+      "texto": "Desative a conta utilizada indevidamente",
+      "dica": "A conta aparece nos logs de autenticação e no acesso irregular a recursos clínicos.",
+      "tipo": "comando",
+      "comando": "desativar",
+      "alvo": "svc_agenda",
+      "revela": [
+        "backup"
+      ],
+      "estados": {
+        "backup": "seguro"
+      }
+    }
+  ],
+  "fichas": {
+    "T1566.001": {
+      "nome": "Phishing com anexo",
+      "descricao": "O adversário envia um anexo que induz a vítima a abrir conteúdo perigoso.",
+      "defesa": "Filtre anexos, valide remetentes e treine funcionários para reportar mensagens suspeitas.",
+      "url": "https://attack.mitre.org/techniques/T1566/001/"
+    },
+    "T1204.002": {
+      "nome": "Execução pelo usuário: arquivo malicioso",
+      "descricao": "A execução depende da ação de uma pessoa ao abrir um arquivo.",
+      "defesa": "Restrinja formatos ativos, use isolamento de conteúdo e alertas de execução anormal.",
+      "url": "https://attack.mitre.org/techniques/T1204/002/"
+    },
+    "T1059.001": {
+      "nome": "PowerShell",
+      "descricao": "O PowerShell pode ser abusado como interpretador para executar ações suspeitas.",
+      "defesa": "Monitore criação de processos, logs de PowerShell e relações entre processos.",
+      "url": "https://attack.mitre.org/techniques/T1059/001/"
+    },
+    "T1053.005": {
+      "nome": "Tarefa agendada",
+      "descricao": "Tarefas do Windows podem permitir reexecução de componentes não autorizados.",
+      "defesa": "Audite criação de tarefas e limite permissões para agendamento.",
+      "url": "https://attack.mitre.org/techniques/T1053/005/"
+    },
+    "T1071.001": {
+      "nome": "Protocolo de aplicação: web",
+      "descricao": "Comunicação suspeita pode trafegar sobre HTTP ou HTTPS.",
+      "defesa": "Correlacione DNS, proxy, firewall e telemetria de endpoint.",
+      "url": "https://attack.mitre.org/techniques/T1071/001/"
+    },
+    "T1078": {
+      "nome": "Contas válidas",
+      "descricao": "Credenciais legítimas comprometidas podem ser usadas para acesso indevido.",
+      "defesa": "Aplique MFA, privilégio mínimo, rotação de segredos e detecção de uso anômalo.",
+      "url": "https://attack.mitre.org/techniques/T1078/"
+    },
+    "T1486": {
+      "nome": "Criptografia de dados para impacto",
+      "descricao": "Ransomware pode criptografar dados para interromper atividades e exigir resgate.",
+      "defesa": "Mantenha backups imutáveis testados, segmentação e capacidade de isolamento.",
+      "url": "https://attack.mitre.org/techniques/T1486/"
+    }
+  },
+  "debrief": "Santa Clara protegido, {nome}. Você identificou o anexo suspeito, a execução incomum, a persistência, o canal de comando e controle e a conta abusada. O bloqueio do destino, o isolamento da recepção e a desativação da conta reduziram o risco aos prontuários. T1486 representa o risco de ransomware neste cenário, não criptografia confirmada. A Operação Caça à Quadrilha apresenta uma réplica fictícia para investigação, sem acesso a sistemas reais.",
+  "falha": "A janela de resposta terminou. O risco de ransomware aumentou e a equipe precisará executar contenção de emergência. Tente novamente, correlacione os eventos e evite ações desnecessárias."
+}
