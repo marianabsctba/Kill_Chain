@@ -1,0 +1,195 @@
+{
+  "id": "02_caca_quadrilha",
+  "titulo": "[02] Operação Caça à Quadrilha",
+  "resumo": "Investigue uma réplica isolada da campanha e monte um dossiê de indicadores.",
+  "intro": "O hospital está protegido. O CSIRT recebeu uma cópia fictícia e isolada de artefatos da campanha, preparada para treinamento. Todos os hosts desta missão são simulados, sem rede externa real. {nome}, reconstrua a operação usando somente evidências.",
+  "inicio": "estacao",
+  "tempo": 0,
+  "hosts": {
+    "estacao": {
+      "nome": "Estação forense",
+      "ip": "10.90.0.21",
+      "tipo": "estacao",
+      "pos": [
+        0.07,
+        0.5
+      ],
+      "oculto": false,
+      "externo": false,
+      "estado": "normal",
+      "arquivos": {
+        "/notas/escopo.txt": "EXERCÍCIO FECHADO: as cópias dos servidores da quadrilha foram reproduzidas como arquivos estáticos. Não há acesso à Internet, credenciais reais, exploração nem código ofensivo. Identifique a campanha e produza o dossiê."
+      }
+    },
+    "espelho": {
+      "nome": "Espelho fictício de C2",
+      "ip": "203.0.113.66",
+      "tipo": "servidor",
+      "pos": [
+        0.4,
+        0.3
+      ],
+      "oculto": true,
+      "externo": true,
+      "estado": "normal",
+      "arquivos": {
+        "/logs/conexoes.log": [
+          "21:02 src=192.0.2.30 campanha=MAROLA resposta=simulacao",
+          "21:34 src=10.20.10.27 campanha=MAROLA destino=central-atendimento.example resultado=beacon_simulado",
+          "21:38 src=10.20.10.27 campanha=MAROLA resultado=beacon_simulado",
+          "21:41 src=198.51.100.12 campanha=OUTRA resultado=simulacao"
+        ],
+        "/notas/contexto.txt": "Cópia para exercício: dados são inventados e refletem somente indicadores que poderiam constar de um dossiê de investigação."
+      },
+      "simulado": true
+    },
+    "painel": {
+      "nome": "Painel fictício preservado",
+      "ip": "198.51.100.77",
+      "tipo": "servidor",
+      "pos": [
+        0.7,
+        0.27
+      ],
+      "oculto": true,
+      "externo": true,
+      "estado": "normal",
+      "arquivos": {
+        "/evidencias/campanhas.log": [
+          "registro=001 campanha=OUTRA organizacao=Mercado Sol Nascente prioridade=baixa",
+          "registro=002 campanha=MAROLA organizacao=Hospital Santa Clara prioridade=alta",
+          "registro=003 campanha=MAROLA organizacao=Clinica Boa Vista prioridade=alta",
+          "registro=004 campanha=TESTE organizacao=Laboratorio Central prioridade=baixa"
+        ],
+        "/evidencias/indicadores.txt": "campanha=MAROLA dominio=central-atendimento.example ip=203.0.113.66 tecnica=protocolo_web_simulado"
+      },
+      "simulado": true
+    },
+    "arquivo": {
+      "nome": "Acervo de evidências preservadas",
+      "ip": "192.0.2.88",
+      "tipo": "backup",
+      "pos": [
+        0.73,
+        0.73
+      ],
+      "oculto": true,
+      "externo": true,
+      "estado": "normal",
+      "arquivos": {
+        "/casos/marola.txt": "DOSSIE PRELIMINAR\ncampanha=MAROLA\nvitima_confirmada=Hospital Santa Clara\noutra_organizacao_citada=Clinica Boa Vista\nindicador_c2=203.0.113.66\nobservacao=referencia ficticia nao confirma comprometimento da outra organizacao",
+        "/casos/notas.txt": "É importante separar evidência de hipótese. Menção em artefato não prova ataque bem-sucedido."
+      },
+      "simulado": true
+    }
+  },
+  "links": [
+    [
+      "estacao",
+      "espelho"
+    ],
+    [
+      "espelho",
+      "painel"
+    ],
+    [
+      "painel",
+      "arquivo"
+    ]
+  ],
+  "emails": [
+    {
+      "quando": "inicio",
+      "de": "Helena Prado <helena@aurora.example>",
+      "assunto": "Nova etapa: laboratório de atribuição",
+      "corpo": "O laboratório contém réplicas autorizadas e isoladas. Leia o escopo e investigue. Não há acesso a servidores reais."
+    },
+    {
+      "quando": "o4",
+      "de": "Equipe Jurídica <juridico@aurora.example>",
+      "assunto": "Cuidado com conclusões",
+      "corpo": "Não atribua autoria a pessoas por apelidos ou domínios. Relate o que as evidências sustentam e ressalte incertezas."
+    }
+  ],
+  "objetivos": [
+    {
+      "id": "o1",
+      "tipo": "ler",
+      "host": "estacao",
+      "arquivo": "/notas/escopo.txt",
+      "texto": "Leia o escopo e as limitações do laboratório",
+      "dica": "Comece pelos documentos locais de autorização e escopo.",
+      "revela": [
+        "espelho"
+      ]
+    },
+    {
+      "id": "o2",
+      "tipo": "comando",
+      "comando": "connect",
+      "alvo": "espelho",
+      "texto": "Acesse a réplica isolada da comunicação suspeita",
+      "dica": "Use hosts para ver o espelho liberado. Aqui, externo significa indicador; simulado autoriza apenas consulta à cópia."
+    },
+    {
+      "id": "o3",
+      "tipo": "resposta",
+      "chave": "campanha",
+      "valor": "MAROLA",
+      "texto": "Descubra o identificador da campanha nos registros",
+      "dica": "Busque as linhas ligadas ao IP interno da recepção e compare o campo campanha.",
+      "revela": [
+        "painel"
+      ],
+      "fichas": [
+        "T1071.001"
+      ]
+    },
+    {
+      "id": "o4",
+      "tipo": "comando",
+      "comando": "connect",
+      "alvo": "painel",
+      "texto": "Acesse a réplica do painel de evidências",
+      "dica": "O painel agora aparece no mapa. Consulte seus arquivos como registros preservados, não como um sistema vivo."
+    },
+    {
+      "id": "o5",
+      "tipo": "resposta",
+      "chave": "organizacao",
+      "valor": "Clinica Boa Vista",
+      "texto": "Identifique outra organização citada na mesma campanha",
+      "dica": "Filtre a campanha identificada no arquivo de campanhas. Uma citação não prova comprometimento.",
+      "revela": [
+        "arquivo"
+      ]
+    },
+    {
+      "id": "o6",
+      "tipo": "ler",
+      "host": "arquivo",
+      "arquivo": "/casos/marola.txt",
+      "texto": "Leia o dossiê preliminar e confira a distinção entre fatos e hipóteses",
+      "dica": "Conecte-se ao acervo revelado e abra o arquivo do caso."
+    },
+    {
+      "id": "o7",
+      "tipo": "resposta",
+      "chave": "indicador",
+      "valor": "203.0.113.66",
+      "texto": "Registre o indicador de comando e controle comprovado",
+      "dica": "Confira se o IP do dossiê coincide com os registros de conexão e o caso anterior.",
+      "fichas": []
+    }
+  ],
+  "fichas": {
+    "T1071.001": {
+      "nome": "Protocolo de aplicação: web",
+      "descricao": "Adversários podem usar protocolos web em comunicação de comando e controle.",
+      "defesa": "Correlacione telemetria de rede e endpoint, monitorando destinos recorrentes.",
+      "url": "https://attack.mitre.org/techniques/T1071/001/"
+    }
+  },
+  "debrief": "Dossiê concluído, {nome}. Você correlacionou a campanha MAROLA, os indicadores simulados e uma segunda organização mencionada. A menção não demonstra que a outra organização foi comprometida. O CSIRT pode preservar o material fictício como relatório de treinamento, sem invasão real ou atribuição pessoal.",
+  "falha": "Não há cronômetro nesta missão."
+}
