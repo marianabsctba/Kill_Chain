@@ -388,6 +388,8 @@ func _write_current_objective() -> void:
 		return
 	var obj := Game.current_objective()
 	_terminal.write("objetivo: " + Game.fmt(obj.get("texto", "")), UiTheme.accent)
+	if not Game.open_answer_key().is_empty():
+		_terminal.write("quando encontrar, responda com: responder %s <valor>" % Game.open_answer_key(), UiTheme.DIM)
 
 
 func _refresh_side() -> void:
@@ -407,6 +409,8 @@ func _refresh_side() -> void:
 			t += "[color=%s][lb] [rb] %s[/color]\n" % [accent, text]
 			if objs[i].has("dica"):
 				t += "[color=%s]    dica: %s[/color]\n" % [dim, Terminal.esc(Game.fmt(objs[i]["dica"]))]
+			if objs[i].get("tipo", "") == "resposta":
+				t += "[color=%s]    responda: responder %s <valor>[/color]\n" % [UiTheme.hex(UiTheme.WARN), Terminal.esc(str(objs[i].get("chave", "")))]
 			t += "\n"
 		else:
 			t += "[color=%s][lb] [rb] ???[/color]\n\n" % dim

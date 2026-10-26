@@ -149,6 +149,71 @@ func save_progress() -> void:
 		push_warning("Falha ao salvar progresso: %s" % err)
 
 
+# Temporada
+
+## true logo depois que o último caso pendente da temporada é concluído.
+var season_just_completed := false
+
+
+func season_complete() -> bool:
+	var missions := list_missions()
+	if missions.is_empty():
+		return false
+	for m in missions:
+		if not completed_missions.has(str(m.get("id", ""))):
+			return false
+	return true
+
+
+func season_score() -> int:
+	var total := 0
+	for id in best_scores:
+		total += int(best_scores[id])
+	return total
+
+
+## Técnicas ATT&CK da temporada: {id: {"card": ficha, "found": bool}}.
+## Uma técnica conta como descoberta quando algum caso que a ensina foi concluído.
+func season_techniques() -> Dictionary:
+	var out := {}
+	for m in list_missions():
+		var done := completed_missions.has(str(m.get("id", "")))
+		var cards: Dictionary = m.get("fichas", {})
+		for obj in m.get("objetivos", []):
+			for c in obj.get("fichas", []):
+				var id := str(c)
+				if not AttackData.is_technique(id) or not cards.has(id):
+					continue
+				if not out.has(id):
+					out[id] = {"card": cards[id], "found": false}
+				if done:
+					out[id]["found"] = true
+	return out
+
+
+func mission_by_id(id: String) -> Dictionary:
+	for m in list_missions():
+		if str(m.get("id", "")) == id:
+			return m
+	return {}
+
+
+## Lê um arquivo de um caso já encerrado (comando arquivo).
+func archive_file(mission_id: String, host_name: String, path: String) -> String:
+	var m := mission_by_id(mission_id)
+	var content = m.get("hosts", {}).get(host_name, {}).get("arquivos", {}).get(path, null)
+	if content == null:
+		return ""
+	if typeof(content) == TYPE_ARRAY:
+		return "\n".join(PackedStringArray(content))
+	return fmt(str(content))
+
+
+func record_evidence_key(key: String) -> void:
+	if running:
+		evidence_seen[key] = true
+
+
 func is_mission_unlocked(m: Dictionary) -> bool:
 	var required := str(m.get("requer", ""))
 	return required.is_empty() or completed_missions.has(required)
@@ -305,6 +370,23 @@ func notify(command: String, arg := "") -> bool:
 	return ok
 
 
+## Chave da pergunta aberta agora, ou "" se o objetivo atual não pede resposta.
+func open_answer_key() -> String:
+	var obj := current_objective()
+	return str(obj.get("chave", "")) if obj.get("tipo", "") == "resposta" else ""
+
+
+## Confere se o valor responde a pergunta aberta, sem contar erro.
+func answer_matches(value: String) -> bool:
+	var accepted = current_objective().get("valor", "")
+	if typeof(accepted) != TYPE_ARRAY:
+		accepted = [accepted]
+	for v in accepted:
+		if _norm(value) == _norm(str(v)):
+			return true
+	return false
+
+
 ## Resposta a um objetivo do tipo "resposta".
 ## Retorna 1 se acertou, 0 se errou e -1 se a chave não é a esperada agora.
 func answer(key: String, value: String) -> int:
@@ -341,7 +423,9 @@ func _complete_objective() -> void:
 	if is_finished():
 		running = false
 		var id := str(mission.get("id", ""))
+		var was_complete := season_complete()
 		completed_missions[id] = true
+		season_just_completed = not was_complete and season_complete()
 		score_result = calculate_score()
 		best_scores[id] = maxi(int(best_scores.get(id, 0)), score_result)
 		save_progress()

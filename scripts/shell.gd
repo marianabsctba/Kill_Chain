@@ -20,6 +20,7 @@ const COMMANDS := [
 	["isolar <host>", "isola uma máquina da rede"],
 	["desativar <usuario>", "desativa uma conta"],
 	["fichas [id]", "fichas ATT&CK desbloqueadas"],
+	["arquivo [caso] [host:/arq]", "evidências de casos encerrados"],
 	["tema <ciano|verde|roxo>", "muda a cor do terminal"],
 	["whoami", "quem é você"],
 ]
@@ -60,9 +61,10 @@ func run(line: String) -> void:
 		"isolar": _isolate(args)
 		"desativar": _disable(args)
 		"fichas": _cards(args)
+		"arquivo": _archive(args)
 		"tema": _theme(args)
 		"whoami": term.write("%s, analista do CSIRT" % Game.player_name)
-		_: term.write("comando não encontrado: %s (digite help)" % cmd, UiTheme.DANGER)
+		_: _unknown(line.strip_edges(), cmd)
 	term.set_prompt(prompt())
 
 
@@ -271,15 +273,37 @@ func _objectives() -> void:
 
 
 func _answer(args: PackedStringArray) -> void:
-	if args.size() < 2:
+	var expected := Game.open_answer_key()
+	if args.is_empty():
 		term.write("uso: responder <chave> <valor>", UiTheme.DIM)
+		if not expected.is_empty():
+			term.write("pergunta aberta agora: responder %s <valor>" % expected, UiTheme.DIM)
 		return
-	var value := " ".join(args.slice(1))
-	match Game.answer(args[0], value):
+	var result := -1
+	if args.size() >= 2:
+		result = Game.answer(args[0], " ".join(args.slice(1)))
+	# Iniciantes costumam esquecer a chave ("responder AURORA-7731"):
+	# nesse caso, tudo o que veio depois do comando vira o valor.
+	if result == -1 and not expected.is_empty():
+		result = Game.answer(expected, " ".join(args))
+	match result:
 		1: term.write("resposta correta", UiTheme.OK)
 		0: term.write("resposta incorreta, revise as evidências", UiTheme.DANGER)
 		-2: term.write("conclusão sem evidências suficientes: consulte outras fontes do caso", UiTheme.WARN)
-		_: term.write("nenhuma pergunta aberta com a chave \"%s\"" % args[0], UiTheme.WARN)
+		_: term.write("nenhuma pergunta aberta agora", UiTheme.WARN)
+
+
+## Um comando desconhecido que é exatamente a resposta da pergunta aberta
+## é aceito como resposta; caso contrário, ensina a sintaxe.
+func _unknown(line: String, cmd: String) -> void:
+	var expected := Game.open_answer_key()
+	if not expected.is_empty() and Game.answer_matches(line):
+		term.write("entendido como resposta: responder %s %s" % [expected, line], UiTheme.DIM)
+		_answer(PackedStringArray([expected, line]))
+		return
+	term.write("comando não encontrado: %s (digite help)" % cmd, UiTheme.DANGER)
+	if not expected.is_empty():
+		term.write("para responder o objetivo, use: responder %s <valor>" % expected, UiTheme.DIM)
 
 
 func _decode(args: PackedStringArray) -> void:
@@ -343,6 +367,59 @@ func _disable(args: PackedStringArray) -> void:
 		return
 	Game.disabled_users[user] = true
 	_contain("desativar", user, "conta %s desativada e sessões encerradas" % user)
+
+
+## Consulta evidências de casos já encerrados. Somente leitura.
+##   arquivo                      lista os casos encerrados
+##   arquivo <caso>               lista os arquivos do caso
+##   arquivo <caso> <host:/arq>   mostra um arquivo
+func _archive(args: PackedStringArray) -> void:
+	var current := str(Game.mission.get("id", ""))
+	if args.is_empty():
+		var any := false
+		for m in Game.list_missions():
+			var id := str(m.get("id", ""))
+			if id == current or not Game.completed_missions.has(id):
+				continue
+			any = true
+			term.write_bb("  [url=arquivo %s][color=%s]%s[/color][/url]  %s" % [
+				id, UiTheme.hex(UiTheme.accent), id, Terminal.esc(str(m.get("titulo", "")))])
+		if not any:
+			term.write("nenhum caso encerrado no arquivo ainda", UiTheme.DIM)
+		return
+
+	var m := Game.mission_by_id(args[0])
+	if m.is_empty():
+		term.write("arquivo: caso desconhecido: %s" % args[0], UiTheme.DANGER)
+		return
+	if not Game.completed_missions.has(args[0]):
+		term.write("arquivo: o caso %s ainda não foi encerrado" % args[0], UiTheme.WARN)
+		return
+
+	if args.size() == 1:
+		term.write(str(m.get("titulo", args[0])), UiTheme.accent)
+		var hosts: Dictionary = m.get("hosts", {})
+		for h in hosts:
+			if hosts[h].get("externo", false):
+				continue
+			for path in hosts[h].get("arquivos", {}):
+				var ref := "%s:%s" % [h, path]
+				term.write_bb("  [url=arquivo %s %s]%s[/url]" % [args[0], ref, Terminal.esc(ref)])
+		return
+
+	var ref := args[1]
+	var host_name := ref.get_slice(":", 0)
+	var path := ref.substr(host_name.length() + 1)
+	var text := Game.archive_file(args[0], host_name, path)
+	if text.is_empty() or m.get("hosts", {}).get(host_name, {}).get("externo", false):
+		term.write("arquivo: não encontrado: %s" % ref, UiTheme.DANGER)
+		return
+	term.write("[arquivo %s] %s" % [args[0], ref], UiTheme.DIM)
+	for l in text.split("\n"):
+		term.write(l)
+	var key := "%s:%s" % [args[0], ref]
+	Game.record_evidence_key(key)
+	Game.notify("arquivo", key)
 
 
 func _cards(args: PackedStringArray) -> void:
