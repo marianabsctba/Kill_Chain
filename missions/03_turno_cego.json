@@ -23,7 +23,8 @@
       "estado": "normal",
       "arquivos": {
         "/chamados/abertura.txt": "Ticket CH-0084, 02:14. Scanner autorizado executou rotina das 02:00 às 02:20. Uma equipe relatou acesso inesperado ao servidor FIN-02. Escopo: identificar falso positivo, validar anomalia, conter apenas o ativo e a conta comprometidos. Não desligar o monitoramento nem o backup.",
-        "/notas/matriz.txt": "O IP 10.40.9.8 pertence ao scanner de vulnerabilidades homologado. O host FIN-02 tem IP 10.40.20.42. A conta svc_faturamento deve executar lotes somente entre 06:00 e 22:00."
+        "/notas/matriz.txt": "O IP 10.40.9.8 pertence ao scanner de vulnerabilidades homologado. O host FIN-02 tem IP 10.40.20.42. A conta svc_faturamento deve executar lotes somente entre 06:00 e 22:00.",
+        "/notas/contrato.txt": "Registro de integração: lote VN-SD-17 associado ao atendimento técnico terceirizado."
       }
     },
     "siem": {
@@ -68,7 +69,11 @@
           "02:08 usuario=svc_faturamento origem=10.40.10.57 destino=FIN-02 logon_tipo=3 resultado=ok esperado=nao",
           "02:10 usuario=svc_backup origem=10.40.30.10 destino=BACK-01 resultado=ok esperado=sim"
         ],
-        "/politicas/contas.txt": "svc_faturamento: uso aprovado no aplicativo FAT-01, janela 06:00 a 22:00, acesso ao FIN-02 não previsto. svc_backup: acesso de backup noturno aprovado."
+        "/politicas/contas.txt": "svc_faturamento: uso aprovado no aplicativo FAT-01, janela 06:00 a 22:00, acesso ao FIN-02 não previsto. svc_backup: acesso de backup noturno aprovado.",
+        "/logs/fornecedor.log": [
+          "01:45 origem=10.40.10.57 perfil=integracao etiqueta=VN-SD-17 contrato=terceirizado",
+          "02:05 conta=svc_faturamento etiqueta=VN-SD-17 acesso=fora_da_janela"
+        ]
       }
     },
     "endpoint": {
@@ -90,7 +95,17 @@
           "02:07 host=FAT-01 processo=script_sync.exe destino=FIN-02 identidade=svc_faturamento evento=uso_anomalo_credencial",
           "02:13 host=FAT-01 processo=antivirus.exe assinatura=valida status=normal"
         ],
-        "/notas/inventario.txt": "Estação FAT-01 executa rotinas da cooperativa, mas não deve iniciar sessão de serviço no servidor FIN-02 às 02h."
+        "/notas/inventario.txt": "Estação FAT-01 executa rotinas da cooperativa, mas não deve iniciar sessão de serviço no servidor FIN-02 às 02h.",
+        "/logs/segredos.log": [
+          "02:01 arquivo=integracao-credenciais.ini proprietario=svc_faturamento classificacao=restrito",
+          "02:06 processo=script_sync.exe operacao=leitura_indevida arquivo=integracao-credenciais.ini identidade=svc_faturamento segredo=NAO_EXIBIDO",
+          "02:12 arquivo=rotina_backup.ini processo=backup_agent.exe status=autorizado"
+        ],
+        "/logs/descoberta.log": [
+          "02:04 processo=gestor_inventario.exe atividade=inventario_rotineiro autorizado=sim",
+          "02:06 processo=script_sync.exe atividade=enumeracao_remota alvo=FIN-02 contexto=inesperado",
+          "02:06 processo=script_sync.exe atividade=enumeracao_remota alvo=DC-01 contexto=inesperado"
+        ]
       }
     },
     "financeiro": {
@@ -120,6 +135,11 @@
           "02:06 usuario=contabilidade recurso=relatorios resultado=ok",
           "02:09 usuario=svc_faturamento recurso=relatorios_sigilosos resultado=ok origem=10.40.10.57",
           "02:10 usuario=svc_faturamento recurso=folha_pagamento resultado=negado origem=10.40.10.57"
+        ],
+        "/logs/rede_lateral.log": [
+          "02:02 origem=10.40.9.8 destino=FIN-02 porta=445 atividade=scanner_autorizado",
+          "02:07 origem=10.40.10.57 destino=FIN-02 porta=445 compartilhamento=ADMIN$ conta=svc_faturamento autenticacao=sucesso autorizacao=ausente",
+          "02:08 origem=10.40.10.57 destino=FIN-02 evento=acesso_remoto origem_log=SMB"
         ]
       }
     },
@@ -216,7 +236,8 @@
       "revela": [
         "siem",
         "ad"
-      ]
+      ],
+      "fichas": []
     },
     {
       "id": "o2",
@@ -231,7 +252,8 @@
       ],
       "revela": [
         "endpoint"
-      ]
+      ],
+      "fichas": []
     },
     {
       "id": "o3",
@@ -246,7 +268,8 @@
       ],
       "revela": [
         "financeiro"
-      ]
+      ],
+      "fichas": []
     },
     {
       "id": "o4",
@@ -259,8 +282,51 @@
         "ad:/logs/auth.log",
         "endpoint:/logs/edr.log"
       ],
+      "fichas": []
+    },
+    {
+      "id": "o4b",
+      "tipo": "resposta",
+      "chave": "arquivo_credencial",
+      "valor": "integracao-credenciais.ini",
+      "texto": "Identifique o arquivo de integração consultado indevidamente",
+      "dica": "Compare leitura do arquivo com o contexto da conta. Não há segredos reais nos registros.",
+      "evidencias": [
+        "endpoint:/logs/segredos.log",
+        "ad:/logs/auth.log"
+      ],
       "fichas": [
-        "T1078"
+        "T1552.001"
+      ]
+    },
+    {
+      "id": "o4c",
+      "tipo": "resposta",
+      "chave": "descoberta",
+      "valor": "FIN-02",
+      "texto": "Identifique um sistema descoberto fora do inventário autorizado",
+      "dica": "Separe o inventário rotineiro de uma enumeração anômala.",
+      "evidencias": [
+        "endpoint:/logs/descoberta.log",
+        "siem:/logs/alertas.log"
+      ],
+      "fichas": [
+        "T1018"
+      ]
+    },
+    {
+      "id": "o4d",
+      "tipo": "resposta",
+      "chave": "compartilhamento",
+      "valor": "ADMIN$",
+      "texto": "Correlacione a movimentação lateral via SMB até FIN-02",
+      "dica": "A porta, o compartilhamento e a conta devem concordar nas fontes.",
+      "evidencias": [
+        "financeiro:/logs/rede_lateral.log",
+        "ad:/logs/auth.log"
+      ],
+      "fichas": [
+        "T1021.002"
       ]
     },
     {
@@ -274,9 +340,7 @@
         "financeiro:/logs/processos.log",
         "siem:/logs/alertas.log"
       ],
-      "fichas": [
-        "T1059.001"
-      ],
+      "fichas": [],
       "revela": [
         "firewall"
       ]
@@ -295,9 +359,7 @@
       "revela": [
         "backup"
       ],
-      "fichas": [
-        "T1071.001"
-      ]
+      "fichas": []
     },
     {
       "id": "o7",
@@ -305,7 +367,8 @@
       "comando": "bloquear",
       "alvo": "198.51.100.91",
       "texto": "Bloqueie apenas o IP externo confirmado",
-      "dica": "Não bloqueie endereços internos do scanner ou do backup."
+      "dica": "Não bloqueie endereços internos do scanner ou do backup.",
+      "fichas": []
     },
     {
       "id": "o8",
@@ -316,7 +379,8 @@
       "dica": "A evidência aponta para o host de origem, não para o controlador de domínio.",
       "estados": {
         "endpoint": "isolado"
-      }
+      },
+      "fichas": []
     },
     {
       "id": "o9",
@@ -327,7 +391,8 @@
       "dica": "Use a mesma identidade confirmada em AD e EDR. Não desative a conta de backup.",
       "estados": {
         "financeiro": "seguro"
-      }
+      },
+      "fichas": []
     },
     {
       "id": "o10",
@@ -340,23 +405,23 @@
     }
   ],
   "fichas": {
-    "T1078": {
-      "nome": "Contas válidas",
-      "descricao": "Uso indevido de credenciais legítimas para acessar sistemas.",
-      "defesa": "MFA resistente a phishing, menor privilégio e alertas de autenticação anômala.",
-      "url": "https://attack.mitre.org/techniques/T1078/"
+    "T1552.001": {
+      "nome": "Credenciais desprotegidas em arquivos",
+      "descricao": "Registros indicam consulta indevida de arquivo de integração com segredos não exibidos.",
+      "defesa": "Use cofres de segredos, limite acessos e audite leituras de arquivos sensíveis.",
+      "url": "https://attack.mitre.org/techniques/T1552/001/"
     },
-    "T1059.001": {
-      "nome": "PowerShell",
-      "descricao": "Interpretador que pode ser abusado durante a execução de atividades suspeitas.",
-      "defesa": "Monitore criação de processos, PowerShell e sessões administrativas.",
-      "url": "https://attack.mitre.org/techniques/T1059/001/"
+    "T1018": {
+      "nome": "Descoberta de sistemas remotos",
+      "descricao": "Uma aplicação enumerou ativos fora do fluxo normal.",
+      "defesa": "Alerte sobre enumeração atípica e restrinja inventários não autorizados.",
+      "url": "https://attack.mitre.org/techniques/T1018/"
     },
-    "T1071.001": {
-      "nome": "Protocolo de aplicação: web",
-      "descricao": "Canais web podem ocultar comunicações de comando e controle.",
-      "defesa": "Combine DNS, proxy, firewall, EDR e padrões temporais.",
-      "url": "https://attack.mitre.org/techniques/T1071/001/"
+    "T1021.002": {
+      "nome": "Serviços remotos via SMB",
+      "descricao": "Acesso não autorizado a compartilhamento administrativo do servidor.",
+      "defesa": "Restrinja SMB administrativo, use segmentação e correlacione autenticações.",
+      "url": "https://attack.mitre.org/techniques/T1021/002/"
     }
   },
   "debrief": "O turno cego exigiu correlação, {nome}. O scanner autorizado produzia alertas vistosos, enquanto a conta svc_faturamento acessava FIN-02 fora do horário. Logs de AD, EDR, processos, DNS e firewall sustentaram as decisões. O backup permaneceu operacional. Lição: confirmar fontes independentes, preservar continuidade e não inferir técnicas sem evidência.",
