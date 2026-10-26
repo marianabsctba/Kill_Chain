@@ -23,7 +23,8 @@
       "estado": "normal",
       "arquivos": {
         "/chamado.txt": "INC-4107: lote LOTE-441 sofreu alteração de favorecido. Scanner autorizado 10.61.9.8 operou das 06:40 às 07:10. Não desligar folha nem auditoria. Pagamento ainda não confirmado.",
-        "/escopo.txt": "Conter apenas a estação LIC-01, a conta abusada e o IP externo comprovado. Não interferir no fechamento legítimo."
+        "/escopo.txt": "Conter apenas a estação LIC-01, a conta abusada e o IP externo comprovado. Não interferir no fechamento legítimo.",
+        "/notas/contrato.txt": "Relação de serviços: etiqueta interna VN-SD-17, suporte a aplicações."
       }
     },
     "siem": {
@@ -64,7 +65,11 @@
           "06:58 conta=licitacoes_svc origem=10.61.10.44 destino=APP-PAG resultado=sucesso",
           "07:07 conta=backup_svc origem=10.61.30.10 resultado=sucesso"
         ],
-        "/politica.txt": "licitacoes_svc: permitida apenas em LIC-01, 08h-18h, sem permissão de editar lotes no APP-PAG. backup_svc: execução noturna autorizada."
+        "/politica.txt": "licitacoes_svc: permitida apenas em LIC-01, 08h-18h, sem permissão de editar lotes no APP-PAG. backup_svc: execução noturna autorizada.",
+        "/logs/contratos.log": [
+          "06:36 perfil=licitacoes_svc referencia=VN-SD-17 nivel=integracao_suporte",
+          "06:58 perfil=licitacoes_svc referencia=VN-SD-17 janela=nao_autorizada"
+        ]
       }
     },
     "lic": {
@@ -84,6 +89,11 @@
           "06:57 processo=cliente_integracao.exe assinatura=ausente usuario=licitacoes_svc",
           "06:58 processo=cliente_integracao.exe destino=APP-PAG conta=licitacoes_svc evento=acesso_anomalo",
           "07:00 processo=antivirus.exe assinatura=valida"
+        ],
+        "/logs/coleta.log": [
+          "06:55 arquivo=rotina_licitacoes.csv status=normal",
+          "06:59 processo=cliente_integracao.exe atividade=leitura_nao_autorizada conjunto=cadastro_fornecedores origem=LIC-01",
+          "07:00 processo=cliente_integracao.exe atividade=empacotamento_simulado conjunto=cadastro_fornecedores bytes=2048"
         ]
       }
     },
@@ -109,6 +119,10 @@
           "07:01 dominio=portal.serraclara.example resultado=interno",
           "07:04 dominio=consulta-convenios.example ip=203.0.113.45",
           "07:05 dominio=portal.serraclara.example resultado=interno"
+        ],
+        "/logs/saida_dados.log": [
+          "07:04 conjunto=cadastro_fornecedores bytes_enviados=2048 sessao=licitacoes_svc canal=web_simulado destino=203.0.113.45",
+          "07:07 conjunto=lotes_publicos resultado=consulta_legitima"
         ]
       }
     },
@@ -129,6 +143,11 @@
           "07:04 src=10.61.20.40 dst=203.0.113.45 porta=443 tipo=beacon_simulado",
           "07:05 src=10.61.20.40 dst=203.0.113.45 porta=443 tipo=beacon_simulado",
           "07:07 src=10.61.30.10 dst=10.61.20.40 tipo=backup"
+        ],
+        "/logs/transferencias.log": [
+          "06:51 origem=10.61.20.40 destino=10.61.30.10 bytes=1800 autorizado=sim",
+          "07:04 origem=10.61.20.40 destino=203.0.113.45 bytes_enviados=2048 evento=transferencia_nao_autorizada conjunto=cadastro_fornecedores",
+          "07:06 origem=10.61.20.40 destino=10.61.30.10 bytes=900 autorizado=sim"
         ]
       }
     },
@@ -193,7 +212,8 @@
       "revela": [
         "siem",
         "ad"
-      ]
+      ],
+      "fichas": []
     },
     {
       "id": "o2",
@@ -208,7 +228,8 @@
       ],
       "revela": [
         "lic"
-      ]
+      ],
+      "fichas": []
     },
     {
       "id": "o3",
@@ -224,9 +245,7 @@
       "revela": [
         "app"
       ],
-      "fichas": [
-        "T1078"
-      ]
+      "fichas": []
     },
     {
       "id": "o4",
@@ -239,6 +258,22 @@
         "ad:/logs/auth.log",
         "lic:/logs/edr.log",
         "app:/logs/auditoria.log"
+      ],
+      "fichas": []
+    },
+    {
+      "id": "o4b",
+      "tipo": "resposta",
+      "chave": "conjunto",
+      "valor": "cadastro_fornecedores",
+      "texto": "Identifique o conjunto de dados coletado sem autorização",
+      "dica": "Consulte o endpoint e confira a atividade de leitura.",
+      "evidencias": [
+        "lic:/logs/coleta.log",
+        "app:/logs/auditoria.log"
+      ],
+      "fichas": [
+        "T1005"
       ]
     },
     {
@@ -252,9 +287,7 @@
         "siem:/logs/alertas.log",
         "app:/logs/auditoria.log"
       ],
-      "fichas": [
-        "T1565.001"
-      ],
+      "fichas": [],
       "revela": [
         "fw"
       ]
@@ -270,11 +303,24 @@
         "app:/logs/dns.log",
         "fw:/logs/fluxos.log"
       ],
-      "fichas": [
-        "T1071.001"
-      ],
+      "fichas": [],
       "revela": [
         "cofre"
+      ]
+    },
+    {
+      "id": "o6b",
+      "tipo": "resposta",
+      "chave": "bytes",
+      "valor": "2048",
+      "texto": "Quantifique a transferência externa confirmada",
+      "dica": "Valide o mesmo volume na aplicação e no firewall.",
+      "evidencias": [
+        "app:/logs/saida_dados.log",
+        "fw:/logs/transferencias.log"
+      ],
+      "fichas": [
+        "T1041"
       ]
     },
     {
@@ -283,7 +329,8 @@
       "comando": "bloquear",
       "alvo": "203.0.113.45",
       "texto": "Bloqueie o destino externo confirmado",
-      "dica": "Não bloqueie serviços internos."
+      "dica": "Não bloqueie serviços internos.",
+      "fichas": []
     },
     {
       "id": "o8",
@@ -291,7 +338,8 @@
       "comando": "isolar",
       "alvo": "lic",
       "texto": "Isole a estação usada indevidamente",
-      "dica": "Não interrompa o aplicativo legítimo."
+      "dica": "Não interrompa o aplicativo legítimo.",
+      "fichas": []
     },
     {
       "id": "o9",
@@ -302,7 +350,8 @@
       "dica": "Preserve contas de operação e backup.",
       "estados": {
         "app": "seguro"
-      }
+      },
+      "fichas": []
     },
     {
       "id": "o10",
@@ -310,27 +359,22 @@
       "host": "cofre",
       "arquivo": "/relatorios/lote.txt",
       "texto": "Verifique se a transferência foi consumada",
-      "dica": "Uma alteração não prova dinheiro transferido."
+      "dica": "Uma alteração não prova dinheiro transferido.",
+      "fichas": []
     }
   ],
   "fichas": {
-    "T1078": {
-      "nome": "Contas válidas",
-      "descricao": "Credenciais legítimas podem ser usadas indevidamente.",
-      "defesa": "MFA, menor privilégio e controles por horário.",
-      "url": "https://attack.mitre.org/techniques/T1078/"
+    "T1005": {
+      "nome": "Dados de sistema local",
+      "descricao": "Processo suspeito coletou dados internos na estação.",
+      "defesa": "Aplique segregação, controles de leitura e monitoramento de acesso em massa.",
+      "url": "https://attack.mitre.org/techniques/T1005/"
     },
-    "T1565.001": {
-      "nome": "Manipulação de dados armazenados",
-      "descricao": "Adversários podem alterar registros para gerar impacto.",
-      "defesa": "Trilha de auditoria imutável e dupla aprovação.",
-      "url": "https://attack.mitre.org/techniques/T1565/001/"
-    },
-    "T1071.001": {
-      "nome": "Comunicação web",
-      "descricao": "Tráfego web pode ser usado como canal suspeito.",
-      "defesa": "Correlacione DNS, firewall e telemetria.",
-      "url": "https://attack.mitre.org/techniques/T1071/001/"
+    "T1041": {
+      "nome": "Exfiltração pelo canal de comando e controle",
+      "descricao": "Registros correlacionados indicam transferência não autorizada de dados para destino externo.",
+      "defesa": "Monitore volume, origem, destino, proxy e controle de saída.",
+      "url": "https://attack.mitre.org/techniques/T1041/"
     }
   },
   "debrief": "O lote foi retido e a tentativa de fraude documentada, {nome}. Ação indevida não equivale a pagamento consumado. A investigação protegeu o serviço e preservou a auditoria.",
