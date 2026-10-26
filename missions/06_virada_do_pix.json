@@ -23,7 +23,8 @@
       "estado": "normal",
       "arquivos": {
         "/chamados/urgente.txt": "INC-6001: lote PIX-884 teve beneficiário divergente em ambiente PRODUCAO. Teste PIX-883 foi autorizado apenas em HOMOLOGACAO. Não suspender PIX inteiro. Preservar trilha e reter PIX-884 até revisão humana.",
-        "/notas/mudancas.txt": "Mudança MC-442: 17h00-18h00, usuário qa_automacao, origem 10.80.9.40, exclusivamente HOMOLOGACAO. svc_pix_prod tem acesso em produção apenas por aplicativo API-01, 10.80.20.10."
+        "/notas/mudancas.txt": "Mudança MC-442: 17h00-18h00, usuário qa_automacao, origem 10.80.9.40, exclusivamente HOMOLOGACAO. svc_pix_prod tem acesso em produção apenas por aplicativo API-01, 10.80.20.10.",
+        "/notas/contrato.txt": "Conciliação: referência VN-SD-17 em documentação do integrador."
       }
     },
     "siem": {
@@ -64,7 +65,13 @@
           "17:48 conta=svc_pix_prod origem=10.80.10.66 destino=API-01 decisao=fora_do_perfil token=TK-601",
           "17:49 conta=svc_pix_prod origem=10.80.10.66 destino=API-01 decisao=fora_do_perfil token=TK-601"
         ],
-        "/politica.txt": "qa_automacao: testes somente homologação. svc_pix_prod: token de aplicação restrito à API-01. Sessão iniciada fora da API-01 exige revogação e investigação."
+        "/politica.txt": "qa_automacao: testes somente homologação. svc_pix_prod: token de aplicação restrito à API-01. Sessão iniciada fora da API-01 exige revogação e investigação.",
+        "/logs/acesso_token.log": [
+          "17:42 origem=10.80.20.10 conta=svc_pix_prod atividade=uso_esperado",
+          "17:47 origem=10.80.10.66 processo=integrador_contabil.exe evento=acesso_indevido_token ident=TK-601 segredo=OCULTO",
+          "17:48 origem=10.80.10.66 conta=svc_pix_prod ident=TK-601 atividade=reutilizacao_de_token",
+          "17:49 origem=10.80.20.10 conta=svc_pix_prod atividade=uso_esperado"
+        ]
       }
     },
     "workstation": {
@@ -89,6 +96,10 @@
           "17:44 usuario=analista_conciliacao site=portal.pontepay.example resultado=ok",
           "17:46 usuario=analista_conciliacao arquivo=ajuste_conciliacao.html origem=mensagem_externa",
           "17:47 usuario=analista_conciliacao arquivo=ajuste_conciliacao.html evento=aberto"
+        ],
+        "/logs/terceirizacao.log": [
+          "17:30 integracao=conciliacao ref=VN-SD-17 prestador=suporte_externo",
+          "17:47 integracao=conciliacao ref=VN-SD-17 evento=execucao_incomum"
         ]
       }
     },
@@ -203,7 +214,8 @@
       "revela": [
         "siem",
         "iam"
-      ]
+      ],
+      "fichas": []
     },
     {
       "id": "o2",
@@ -218,7 +230,8 @@
       ],
       "revela": [
         "workstation"
-      ]
+      ],
+      "fichas": []
     },
     {
       "id": "o3",
@@ -234,9 +247,7 @@
       "revela": [
         "api"
       ],
-      "fichas": [
-        "T1078"
-      ]
+      "fichas": []
     },
     {
       "id": "o4",
@@ -249,9 +260,7 @@
         "workstation:/logs/browser.log",
         "workstation:/logs/edr.log"
       ],
-      "fichas": [
-        "T1204.002"
-      ]
+      "fichas": []
     },
     {
       "id": "o5",
@@ -281,6 +290,22 @@
       "evidencias": [
         "iam:/logs/sessoes.log",
         "workstation:/logs/edr.log"
+      ],
+      "fichas": []
+    },
+    {
+      "id": "o6b",
+      "tipo": "resposta",
+      "chave": "evento_token",
+      "valor": "acesso_indevido_token",
+      "texto": "Classifique o evento de obtenção indevida do token",
+      "dica": "Não presuma senha exposta. A evidência aponta para token de aplicação.",
+      "evidencias": [
+        "iam:/logs/acesso_token.log",
+        "workstation:/logs/edr.log"
+      ],
+      "fichas": [
+        "T1528"
       ]
     },
     {
@@ -294,9 +319,7 @@
         "api:/logs/dns.log",
         "firewall:/logs/saida.log"
       ],
-      "fichas": [
-        "T1071.001"
-      ],
+      "fichas": [],
       "revela": [
         "cofre"
       ]
@@ -307,7 +330,8 @@
       "comando": "bloquear",
       "alvo": "198.51.100.150",
       "texto": "Bloqueie somente o indicador externo confirmado",
-      "dica": "Evite bloquear a rede do Banco Central ou serviços legítimos."
+      "dica": "Evite bloquear a rede do Banco Central ou serviços legítimos.",
+      "fichas": []
     },
     {
       "id": "o9",
@@ -315,7 +339,8 @@
       "comando": "isolar",
       "alvo": "workstation",
       "texto": "Isole o endpoint usado para a atividade suspeita",
-      "dica": "Não interrompa API-01, que atende transações legítimas."
+      "dica": "Não interrompa API-01, que atende transações legítimas.",
+      "fichas": []
     },
     {
       "id": "o10",
@@ -326,7 +351,8 @@
       "dica": "A contenção exige nova credencial de produção de forma controlada.",
       "estados": {
         "api": "seguro"
-      }
+      },
+      "fichas": []
     },
     {
       "id": "o11",
@@ -334,33 +360,22 @@
       "host": "cofre",
       "arquivo": "/relatorios/parecer.txt",
       "texto": "Confirme o destino do lote e a continuidade operacional",
-      "dica": "Retenção e liquidação são estados diferentes."
+      "dica": "Retenção e liquidação são estados diferentes.",
+      "fichas": []
     }
   ],
   "fichas": {
-    "T1078": {
-      "nome": "Contas válidas",
-      "descricao": "Sessões legítimas podem ser abusadas fora do perfil.",
-      "defesa": "Limite tokens por origem, aplique menor privilégio e monitore sessões.",
-      "url": "https://attack.mitre.org/techniques/T1078/"
-    },
-    "T1204.002": {
-      "nome": "Execução pelo usuário: arquivo malicioso",
-      "descricao": "Abertura de um arquivo suspeito antecedeu atividade anômala, mas a cadeia causal completa requer mais análise.",
-      "defesa": "Isole anexos, registre a cadeia de processos e valide reputação.",
-      "url": "https://attack.mitre.org/techniques/T1204/002/"
-    },
     "T1565.001": {
       "nome": "Manipulação de dados armazenados",
       "descricao": "Alteração não autorizada de um registro financeiro pode afetar integridade.",
       "defesa": "Auditoria imutável, segregação de funções e dupla aprovação.",
       "url": "https://attack.mitre.org/techniques/T1565/001/"
     },
-    "T1071.001": {
-      "nome": "Protocolo de aplicação: web",
-      "descricao": "Conexões HTTPS atípicas podem carregar comunicação de comando e controle.",
-      "defesa": "Cruze DNS, firewall e telemetria de endpoint.",
-      "url": "https://attack.mitre.org/techniques/T1071/001/"
+    "T1528": {
+      "nome": "Roubo de token de acesso de aplicação",
+      "descricao": "Telemetria indica acesso não autorizado a token de aplicação seguido de reutilização.",
+      "defesa": "Proteja tokens, limite permissões, reduza duração e revogue credenciais expostas.",
+      "url": "https://attack.mitre.org/techniques/T1528/"
     }
   },
   "debrief": "A PontePay preservou seu serviço PIX, {nome}. O teste de homologação era legítimo, mas PIX-884 sofreu alteração indevida em produção. A liquidação foi retida e nenhuma transferência desse lote foi confirmada. Contenção seletiva, revogação de credenciais e auditoria preservaram a operação. Ainda é necessário investigar a causalidade entre o arquivo aberto e o incidente.",
