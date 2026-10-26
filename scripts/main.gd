@@ -11,6 +11,7 @@ var _terminal: Terminal
 var _shell: Shell
 var _mission_label: Label
 var _clock: Label
+var _timer_label: Label
 var _objectives_text: RichTextLabel
 var _inbox_text: RichTextLabel
 var _cards_text: RichTextLabel
@@ -31,12 +32,19 @@ func _ready() -> void:
 	Game.mail_received.connect(_on_mail)
 	Game.objective_completed.connect(_on_objective)
 	Game.mission_finished.connect(_on_mission_finished)
+	Game.mission_failed.connect(_on_mission_failed)
 	_show_boot()
 
 
 func _process(_delta: float) -> void:
 	if is_instance_valid(_clock):
 		_clock.text = Time.get_time_string_from_system()
+	if is_instance_valid(_timer_label) and Game.is_timed():
+		var s := int(ceil(Game.time_left))
+		_timer_label.text = "%s %02d:%02d" % [Game.mission.get("tempo_rotulo", "tempo"), s / 60, s % 60]
+		var urgent := s <= 60 and Game.running
+		var blink := urgent and int(Time.get_ticks_msec() / 400) % 2 == 0
+		_timer_label.add_theme_color_override("font_color", UiTheme.DANGER if urgent and not blink else UiTheme.WARN)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -88,6 +96,8 @@ func _clear() -> void:
 		c.queue_free()
 	_terminal = null
 	_clock = null
+	_timer_label = null
+	Game.running = false
 
 
 func _center_panel(width: float) -> VBoxContainer:
@@ -304,6 +314,7 @@ func _build_desk() -> void:
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bar.add_child(spacer)
+	_timer_label = _label(bar, "", UiTheme.WARN, 18)
 	var who := _label(bar, "analista: " + Game.player_name, UiTheme.DIM)
 	who.autowrap_mode = TextServer.AUTOWRAP_OFF
 	_clock = _label(bar, "", UiTheme.accent)
@@ -421,6 +432,37 @@ func _on_objective(obj: Dictionary) -> void:
 	glitch(0.45, 0.3)
 	_write_current_objective()
 	_refresh_side()
+
+
+func _on_mission_failed() -> void:
+	if _screen != "mesa":
+		return
+	var mission := Game.mission
+	glitch(1.0, 1.2)
+	_terminal.write("TEMPO ESGOTADO", UiTheme.DANGER)
+	await get_tree().create_timer(1.0).timeout
+	if _screen != "mesa":
+		return
+	var overlay := ColorRect.new()
+	overlay.color = Color(0.15, 0, 0.02, 0.8)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_root.add_child(overlay)
+	var box := _center_panel(720)
+	_label(box, "O ATAQUE VENCEU DESTA VEZ", UiTheme.DANGER, 26)
+	_label(box, Game.fmt(mission.get("falha", "O tempo acabou antes da contenção.")))
+	_label(box, "objetivos concluídos: %d de %d" % [Game.objective_index, Game.objectives().size()], UiTheme.DIM)
+	var row := HBoxContainer.new()
+	box.add_child(row)
+	var retry := Button.new()
+	retry.text = "TENTAR DE NOVO"
+	retry.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	retry.pressed.connect(_start_mission.bind(mission))
+	row.add_child(retry)
+	var back := Button.new()
+	back.text = "MENU"
+	back.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	back.pressed.connect(_show_menu)
+	row.add_child(back)
 
 
 func _on_mission_finished() -> void:

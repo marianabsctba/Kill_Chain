@@ -4,6 +4,7 @@ extends Node
 
 signal mission_started
 signal mission_finished
+signal mission_failed
 signal objective_completed(objective: Dictionary)
 signal mail_received(mail: Dictionary)
 signal host_changed
@@ -28,12 +29,38 @@ var inbox: Array = []
 var read_mail := {}
 var objective_index := 0
 var unlocked_cards: Array = []
+var blocked_ips := {}
+var disabled_users := {}
+
+## Cronômetro da missão em segundos (0 = sem limite). Só corre com running.
+var time_left := 0.0
+var running := false
 
 var _gender_re := RegEx.create_from_string("\\{([^{}|]*)\\|([^{}|]*)\\}")
 
 
 func _ready() -> void:
 	load_profile()
+
+
+func _process(delta: float) -> void:
+	if not running or time_left <= 0.0:
+		return
+	time_left -= delta
+	if time_left <= 0.0:
+		time_left = 0.0
+		running = false
+		mission_failed.emit()
+
+
+func is_timed() -> bool:
+	return float(mission.get("tempo", 0)) > 0.0
+
+
+## Tira segundos do cronômetro como punição por uma ação errada.
+func penalize(seconds: float) -> void:
+	if running and is_timed():
+		time_left = maxf(time_left - seconds, 0.01)
 
 
 # Perfil
@@ -114,7 +141,11 @@ func start_mission(m: Dictionary) -> void:
 	inbox.clear()
 	read_mail.clear()
 	unlocked_cards.clear()
+	blocked_ips.clear()
+	disabled_users.clear()
 	objective_index = 0
+	time_left = float(mission.get("tempo", 0))
+	running = true
 	for id in hosts():
 		var h: Dictionary = hosts()[id]
 		host_state[id] = h.get("estado", "normal")
@@ -176,10 +207,11 @@ func is_finished() -> bool:
 
 ## Chamado pelo terminal a cada comando bem-sucedido. Avança o objetivo
 ## atual quando ele é do tipo "comando" ou "ler" e bate com o evento.
-func notify(command: String, arg := "") -> void:
+## Retorna true se o comando concluiu o objetivo.
+func notify(command: String, arg := "") -> bool:
 	var obj := current_objective()
 	if obj.is_empty():
-		return
+		return false
 	var ok := false
 	match obj.get("tipo", ""):
 		"comando":
@@ -191,6 +223,7 @@ func notify(command: String, arg := "") -> void:
 				and arg == obj.get("arquivo", "")
 	if ok:
 		_complete_objective()
+	return ok
 
 
 ## Resposta a um objetivo do tipo "resposta".
@@ -224,6 +257,7 @@ func _complete_objective() -> void:
 	network_changed.emit()
 	_deliver_mail(str(obj.get("id", "")))
 	if is_finished():
+		running = false
 		mission_finished.emit()
 
 

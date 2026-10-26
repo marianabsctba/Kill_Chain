@@ -15,6 +15,10 @@ const COMMANDS := [
 	["mail [n]", "caixa de entrada"],
 	["objetivos", "mostra o objetivo atual"],
 	["responder <chave> <valor>", "responde um objetivo"],
+	["decode <texto>", "decodifica base64"],
+	["bloquear <ip>", "bloqueia um IP no firewall"],
+	["isolar <host>", "isola uma máquina da rede"],
+	["desativar <usuario>", "desativa uma conta"],
 	["fichas [id]", "fichas ATT&CK desbloqueadas"],
 	["tema <ciano|verde|roxo>", "muda a cor do terminal"],
 	["whoami", "quem é você"],
@@ -51,6 +55,10 @@ func run(line: String) -> void:
 		"mail": _mail(args)
 		"objetivos": _objectives()
 		"responder": _answer(args)
+		"decode": _decode(args)
+		"bloquear": _block(args)
+		"isolar": _isolate(args)
+		"desativar": _disable(args)
 		"fichas": _cards(args)
 		"tema": _theme(args)
 		"whoami": term.write("%s, analista do CSIRT" % Game.player_name)
@@ -209,6 +217,10 @@ func _connect(args: PackedStringArray) -> void:
 	if id.is_empty():
 		term.write("connect: host desconhecido: %s" % args[0], UiTheme.DANGER)
 		return
+	if Game.host(id).get("externo", false):
+		term.write("connect: %s é infraestrutura externa, fora do escopo do CSIRT." % id, UiTheme.WARN)
+		term.write("registre o indicador no relatório e encaminhe às autoridades.", UiTheme.DIM)
+		return
 	if Game.host_state.get(id) == "isolado":
 		term.write("connect: %s está isolado da rede" % id, UiTheme.WARN)
 		return
@@ -266,6 +278,66 @@ func _answer(args: PackedStringArray) -> void:
 		1: term.write("resposta correta", UiTheme.OK)
 		0: term.write("resposta incorreta, revise as evidências", UiTheme.DANGER)
 		_: term.write("nenhuma pergunta aberta com a chave \"%s\"" % args[0], UiTheme.WARN)
+
+
+func _decode(args: PackedStringArray) -> void:
+	if args.is_empty():
+		term.write("uso: decode <texto em base64>", UiTheme.DIM)
+		return
+	var text := Marshalls.base64_to_utf8("".join(args))
+	if text.is_empty():
+		term.write("decode: não parece base64 válido", UiTheme.DANGER)
+		return
+	term.write(text, UiTheme.WARN)
+	Game.notify("decode", text)
+
+
+## Ações de contenção. Uma ação que não resolve o objetivo atual
+## custa tempo nas missões com cronômetro.
+func _contain(command: String, arg: String, done_msg: String) -> void:
+	term.write(done_msg, UiTheme.OK)
+	if not Game.notify(command, arg) and Game.is_timed():
+		var penalty := float(Game.mission.get("penalidade", 30))
+		Game.penalize(penalty)
+		term.write("ação desnecessária: a equipe perdeu %d segundos" % int(penalty), UiTheme.DANGER)
+
+
+func _block(args: PackedStringArray) -> void:
+	if args.is_empty() or args[0].split(".").size() != 4:
+		term.write("uso: bloquear <ip>", UiTheme.DIM)
+		return
+	if Game.blocked_ips.has(args[0]):
+		term.write("%s já está bloqueado" % args[0], UiTheme.DIM)
+		return
+	Game.blocked_ips[args[0]] = true
+	_contain("bloquear", args[0], "regra criada no firewall: tráfego para %s bloqueado" % args[0])
+
+
+func _isolate(args: PackedStringArray) -> void:
+	if args.is_empty():
+		term.write("uso: isolar <host>", UiTheme.DIM)
+		return
+	var id := Game.find_host(args[0])
+	if id.is_empty():
+		term.write("isolar: host desconhecido: %s" % args[0], UiTheme.DANGER)
+		return
+	if Game.host_state.get(id) == "isolado":
+		term.write("%s já está isolado" % id, UiTheme.DIM)
+		return
+	Game.set_host_state(id, "isolado")
+	_contain("isolar", id, "%s isolado da rede pelo EDR" % id)
+
+
+func _disable(args: PackedStringArray) -> void:
+	if args.is_empty():
+		term.write("uso: desativar <usuario>", UiTheme.DIM)
+		return
+	var user := args[0].to_lower()
+	if Game.disabled_users.has(user):
+		term.write("a conta %s já está desativada" % user, UiTheme.DIM)
+		return
+	Game.disabled_users[user] = true
+	_contain("desativar", user, "conta %s desativada e sessões encerradas" % user)
 
 
 func _cards(args: PackedStringArray) -> void:
