@@ -14,7 +14,10 @@ signal accent_changed
 enum Gender { MASCULINO, FEMININO }
 
 const PROFILE_PATH := "user://perfil.cfg"
+const PROGRESS_PATH := "user://progresso.cfg"
 const MISSIONS_DIR := "res://missions"
+
+var completed_missions: Dictionary = {}
 
 var player_name := ""
 var gender: int = Gender.FEMININO
@@ -41,6 +44,7 @@ var _gender_re := RegEx.create_from_string("\\{([^{}|]*)\\|([^{}|]*)\\}")
 
 func _ready() -> void:
 	load_profile()
+	load_progress()
 
 
 func _process(delta: float) -> void:
@@ -112,6 +116,32 @@ func fmt(text: String) -> String:
 	return out + src.substr(pos)
 
 
+# Progresso salvo localmente
+
+func load_progress() -> void:
+	completed_missions.clear()
+	var cfg := ConfigFile.new()
+	if cfg.load(PROGRESS_PATH) != OK:
+		return
+	for id in cfg.get_section_keys("concluidas") if cfg.has_section("concluidas") else []:
+		if cfg.get_value("concluidas", id, false):
+			completed_missions[id] = true
+
+
+func save_progress() -> void:
+	var cfg := ConfigFile.new()
+	for id in completed_missions:
+		cfg.set_value("concluidas", id, true)
+	var err := cfg.save(PROGRESS_PATH)
+	if err != OK:
+		push_warning("Falha ao salvar progresso: %s" % err)
+
+
+func is_mission_unlocked(m: Dictionary) -> bool:
+	var required := str(m.get("requer", ""))
+	return required.is_empty() or completed_missions.has(required)
+
+
 # Missões
 
 func list_missions() -> Array:
@@ -135,6 +165,9 @@ func load_mission_file(path: String) -> Dictionary:
 
 
 func start_mission(m: Dictionary) -> void:
+	if not is_mission_unlocked(m):
+		push_warning("Missão bloqueada: " + str(m.get("id", "")))
+		return
 	mission = m
 	revealed.clear()
 	host_state.clear()
@@ -258,6 +291,8 @@ func _complete_objective() -> void:
 	_deliver_mail(str(obj.get("id", "")))
 	if is_finished():
 		running = false
+		completed_missions[str(mission.get("id", ""))] = true
+		save_progress()
 		mission_finished.emit()
 
 
