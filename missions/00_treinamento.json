@@ -1,0 +1,113 @@
+{
+  "id": "00_treinamento",
+  "titulo": "[00] Primeiro dia no CSIRT",
+  "resumo": "Treinamento: aprenda a usar o terminal, ler logs e responder objetivos.",
+  "intro": "Primeiro dia no CSIRT Aurora. Antes de pegar casos reais, a coordenação preparou um laboratório de treinamento.",
+  "inicio": "estacao",
+  "hosts": {
+    "estacao": {
+      "nome": "Sua estação",
+      "ip": "10.10.0.21",
+      "tipo": "estacao",
+      "pos": [0.15, 0.5],
+      "arquivos": {
+        "/leia-me.txt": "Bem-vind{o|a} ao CSIRT Aurora, {nome}.\n\nEste é o seu ambiente de trabalho. Tudo o que você faz aqui é pelo terminal\nou clicando no mapa da rede.\n\nPróximo passo: conecte no servidor de treinamento.\nDigite: connect lab  (ou clique no nó LAB no mapa)",
+        "/notas/comandos.txt": "ls        lista arquivos\ncd        entra em uma pasta\ncat       mostra um arquivo\ngrep      procura um termo dentro dos arquivos\nTab       completa comandos e nomes de arquivo\nsetas     navegam no histórico"
+      }
+    },
+    "lab": {
+      "nome": "Servidor de treinamento",
+      "ip": "10.10.0.50",
+      "tipo": "servidor",
+      "pos": [0.55, 0.3],
+      "oculto": true,
+      "arquivos": {
+        "/logs/treino.log": [
+          "2026-10-26 08:00:01 servico=backup status=iniciado",
+          "2026-10-26 08:00:04 servico=backup status=ok duracao=3s",
+          "2026-10-26 08:15:22 servico=web status=ok requisicoes=1204",
+          "2026-10-26 08:30:00 servico=treinamento mensagem=parabens codigo=AURORA-7731",
+          "2026-10-26 08:45:10 servico=web status=ok requisicoes=1311",
+          "2026-10-26 09:00:01 servico=backup status=iniciado",
+          "2026-10-26 09:00:05 servico=backup status=ok duracao=4s"
+        ],
+        "/LEIA.txt": "Logs ficam em /logs. Arquivos de log costumam ser enormes,\nentão em vez de ler tudo, procure pelo que interessa:\n\n  grep codigo /logs/treino.log\n\nDepois responda com:  responder codigo <valor encontrado>"
+      }
+    },
+    "arquivo": {
+      "nome": "Arquivo de relatórios",
+      "ip": "10.10.0.90",
+      "tipo": "backup",
+      "pos": [0.8, 0.7],
+      "oculto": true,
+      "arquivos": {
+        "/relatorios/modelo.txt": "MODELO DE RELATÓRIO DE INCIDENTE\n\n1. Resumo do que aconteceu\n2. Linha do tempo\n3. Técnicas identificadas (MITRE ATT&CK)\n4. Ações de contenção\n5. Recomendações\n\nTodo caso que você fechar vai gerar um relatório assim."
+      }
+    }
+  },
+  "links": [
+    ["estacao", "lab"],
+    ["lab", "arquivo"]
+  ],
+  "emails": [
+    {
+      "quando": "inicio",
+      "de": "Helena Prado <coordenacao@aurora.example>",
+      "assunto": "Bem-vind{o|a} ao time",
+      "corpo": "Oi, {nome}!\n\nQue bom ter você com a gente. Antes dos casos reais, faça o treinamento:\ncomece lendo o arquivo leia-me.txt da sua estação (cat leia-me.txt).\n\nQualquer dúvida, digite objetivos para ver o que falta.\n\nHelena\nCoordenação, CSIRT Aurora"
+    },
+    {
+      "quando": "o3",
+      "de": "Helena Prado <coordenacao@aurora.example>",
+      "assunto": "Boa! Uma última coisa",
+      "corpo": "Você achou o código. É exatamente assim que a gente trabalha:\nevidência primeiro, conclusão depois.\n\nLiberei o acesso ao arquivo de relatórios. Dê uma olhada no modelo\nque usamos para documentar os incidentes."
+    }
+  ],
+  "objetivos": [
+    {
+      "id": "o1",
+      "texto": "Leia o arquivo leia-me.txt da sua estação",
+      "dica": "digite: cat leia-me.txt",
+      "tipo": "ler",
+      "host": "estacao",
+      "arquivo": "/leia-me.txt",
+      "revela": ["lab"]
+    },
+    {
+      "id": "o2",
+      "texto": "Conecte no servidor de treinamento",
+      "dica": "digite: connect lab, ou clique no nó no mapa",
+      "tipo": "comando",
+      "comando": "connect",
+      "alvo": "lab"
+    },
+    {
+      "id": "o3",
+      "texto": "Encontre o código de treinamento nos logs do servidor",
+      "dica": "use grep para procurar a palavra codigo dentro de /logs",
+      "tipo": "resposta",
+      "chave": "codigo",
+      "valor": "AURORA-7731",
+      "fichas": ["ATT&CK"],
+      "revela": ["arquivo"],
+      "estados": {"lab": "seguro"}
+    },
+    {
+      "id": "o4",
+      "texto": "Leia o modelo de relatório no arquivo de relatórios",
+      "dica": "connect arquivo, depois cat /relatorios/modelo.txt",
+      "tipo": "ler",
+      "host": "arquivo",
+      "arquivo": "/relatorios/modelo.txt"
+    }
+  ],
+  "fichas": {
+    "ATT&CK": {
+      "nome": "O que é o MITRE ATT&CK",
+      "descricao": "Uma base de conhecimento pública que cataloga como grupos reais atacam: táticas (o objetivo, como ganhar acesso ou roubar dados) e técnicas (o meio usado). Cada técnica tem um ID, como T1566.",
+      "defesa": "Defensores usam o ATT&CK para saber o que monitorar, quais controles aplicar e onde existem lacunas de detecção.",
+      "url": "https://attack.mitre.org"
+    }
+  },
+  "debrief": "Treinamento concluído, {nome}. Você aprendeu a navegar pelo terminal, procurar evidências em logs e registrar respostas. Nos próximos casos, cada técnica encontrada vai virar uma ficha ATT&CK com o que a quadrilha fez e como se defender."
+}

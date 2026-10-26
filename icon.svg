@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="16" fill="#05080d"/>
+  <polygon points="64,12 109,38 109,90 64,116 19,90 19,38" fill="none" stroke="#3ef0ff" stroke-width="6"/>
+  <text x="64" y="78" font-family="Consolas, monospace" font-size="38" font-weight="bold" fill="#3ef0ff" text-anchor="middle">KC</text>
+</svg>
